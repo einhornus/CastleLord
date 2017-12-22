@@ -15,7 +15,6 @@ class Map {
         this.treesArray = [];
         this.empty = utils.create2DArray(width, height, true);
         this.stoneDeposits = utils.create2DArray(width, height, false);
-        this.goldDeposits = utils.create2DArray(width, height, false);
         this.ironDeposits = utils.create2DArray(width, height, false);
 
         this.water = utils.create2DArray(width, height, false);
@@ -26,7 +25,6 @@ class Map {
         this.landscapeTrees = [];
         this.landscapeStoneDeposits = [];
         this.landscapeIronDeposits = [];
-        this.landscapeGoldDeposits = [];
         this.landscapeWater = [];
     }
 
@@ -42,19 +40,9 @@ class Map {
         this.waterArray.push(point);
     }
 
-    addGoldDeposit(point) {
-        this.goldDeposits[point.x][point.y] = true;
-        this.empty[point.x][point.y] = false;
-        this.passable[point.x][point.y] = false;
-        this.landscapeGoldDeposits.push(point);
-    }
 
 
     isDeposit(point) {
-        if (this.goldDeposits[point.x][point.y]) {
-            return true;
-        }
-
         if (this.stoneDeposits[point.x][point.y]) {
             return true;
         }
@@ -94,21 +82,14 @@ class Map {
     }
 
     static canPlaceFarm(point, game) {
-        var buildingTiles = Unit.enumeratePointsInsideArea(point, 5, game);
-
-        for (var i = 0; i < buildingTiles.length; i++) {
-            var p = buildingTiles[i];
-            if (game.map.water[p.x][p.y]) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
-
 
     static canPlaceQuarry(point, game) {
         return game.map.stoneDeposits[point.x][point.y];
     }
+
+
 
     static canPlaceIronMine(point, game) {
         return game.map.ironDeposits[point.x][point.y];

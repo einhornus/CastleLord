@@ -129,10 +129,12 @@ var create2DArrayOfLists = function(width, height){
 var GAME_PARAMS = {
     DAMAGE_MODIFIER : 1.0,
     HEAL_VOLUME : 50,
-    TOWER_HEIGHT : 10.0,
+    TOWER_HEIGHT : 3.0,
     TREE_HEIGHT : 4.0,
-    SIGHT_RADIUS : 20,
+    SIGHT_RADIUS : 15,
 
+    FARM_DIST_K : 0.02,
+    WELL_K : 0.8,
 
     RANGE:{
         K : 0.01,
@@ -140,10 +142,10 @@ var GAME_PARAMS = {
     },
 
     INCOME:{
-        FARM:75,
-        MINE:50,
-        HOUSE:100,
-        QUARRY:50
+        FARM:100,
+        MINE:150,
+        HOUSE:150,
+        QUARRY:100
     },
 
     PRICE:{
@@ -202,11 +204,6 @@ var GAME_PARAMS = {
         BARRACKS:{
             GOLD:100,
             STONE:300
-        },
-
-        CHURCH:{
-            GOLD:100,
-            STONE:100
         },
 
         CHURCH:{
@@ -274,8 +271,6 @@ var GAME_PARAMS = {
     MORALE_PRIEST_NEARBY_K : +100,
     MORALE_PRIEST_NEARBY_O : +5,
     MORALE_WOUNDED_K : -0.3,
-
-
 }
 
 
@@ -286,6 +281,14 @@ getSpeed = function(armour, morale){
 
     if(armour === GAME_PARAMS.ARMOUR.CATAPULT){
         return 7;
+    }
+
+    if(armour === GAME_PARAMS.ARMOUR.STONE_BUILDING){
+        return 0;
+    }
+
+    if(armour === GAME_PARAMS.ARMOUR.WOOD_BUILDING){
+        return 0;
     }
 
     var speedTable = [

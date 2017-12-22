@@ -12,10 +12,23 @@ using System;
 
 namespace Assets.src.GameController
 {
-
     public partial class GameControllerBehavior : MonoBehaviour
     {
         public GameObject tilePlanePrefab;
+        public GameObject userInfoPointer;
+
+        public enum TileMode
+        {
+            Nothing, 
+            Moving,
+            Sight
+        }
+
+        public GameObject tileModeNothingIcon;
+        public GameObject tileModeSightIcon;
+        public GameObject tileModeMovingIcon;
+
+        private TileMode currentTileMode;
 
         private List<GameObject> tilePlanePrefabs = new List<GameObject>();
 
@@ -28,10 +41,8 @@ namespace Assets.src.GameController
             {
                 string key = v.Key;
                 GameObject value = v.Value;
-
-                Vector3 screenPointObject = Camera.main.WorldToScreenPoint(value.transform.localPosition);
-                float distance = Vector3.Distance(screenPointObject, Input.mousePosition);
-                if (bestDistance > distance && distance < GetSize(value).x * 40)
+                float distance = DistanceFromCameraRayToObject(value);
+                if (distance < bestDistance && distance < Geometry.CELL_SIZE * 1f)
                 {
                     bestDistance = distance;
                     bestKey = key;
@@ -54,8 +65,6 @@ namespace Assets.src.GameController
 
         public void SetUnitInfo(Unit unit)
         {
-            Debug.Log("Setting "+unit.type);
-
             GameObject prefab = GetPutUnitPrefab(unit);
             if (currentUnitInfoObject != null) {
                 Destroy(currentUnitInfoObject);
@@ -69,13 +78,42 @@ namespace Assets.src.GameController
 
             unitIndicatorTitleText.GetComponent<TextMesh>().text = unit.type;
             unitIndicatorHpText.GetComponent<TextMesh>().text = unit.health + " hp";
-            unitIndicatorMoraleText.GetComponent<TextMesh>().text = unit.morale + " morale";
+
+            bool incomeUnit = unit.type.Equals("Farm") || unit.type.Equals("House") || unit.type.Equals("Mine") || unit.type.Equals("Quarry");
+            if (!incomeUnit) {
+                unitIndicatorMoraleText.GetComponent<TextMesh>().text = unit.morale + " morale";
+            }
+            else
+            {
+                unitIndicatorMoraleText.GetComponent<TextMesh>().text = unit.income + " income";
+            }
 
             unitIndicatorHpText.GetComponent<TextMesh>().color = GetColor(0, 100, unit.health);
-            unitIndicatorMoraleText.GetComponent<TextMesh>().color = GetColor(-25, 25, unit.morale);
 
-            List<Point> relocationPoints = unit.GetRelocationPoints(obstacles, width, height);
-            SetTiles(relocationPoints);
+            if (!incomeUnit)
+            {
+                unitIndicatorMoraleText.GetComponent<TextMesh>().color = GetColor(-25, 25, unit.morale);
+            }
+            else
+            {
+                unitIndicatorMoraleText.GetComponent<TextMesh>().color = GetColor(0, 150, unit.income);
+            }
+
+            if (this.currentTileMode == TileMode.Moving) {
+                List<Point> relocationPoints = unit.GetRelocationPoints(obstacles, mapWidth, mapHeight);
+                SetTiles(relocationPoints);
+            }
+
+            if (this.currentTileMode == TileMode.Sight)
+            {
+                List<Point> sightPoints = unit.GetSightPoints(obstacles, mapWidth, mapHeight);
+                SetTiles(sightPoints);
+            }
+
+            Vector3 ps = Geometry.GetGlobalPosition(unit.position, hd);
+
+            ps.y += Geometry.CELL_SIZE * 0;
+            userInfoPointer.transform.position = ps;
 
             currentSetUnitInfo = unit.id;
         }
@@ -104,25 +142,82 @@ namespace Assets.src.GameController
 
         public void UpdateUnitInfo()
         {
-            FindAndSetUnitInfo();
 
-            if (currentUnitInfoObject != null) {
-                AttachGameObjectToUIScreenPoint(currentUnitInfoObject, 0.1f, 0.12f, 0.1f, false);
-            }
-
-            if (unitIndicatorTitleText != null) {
-                AttachGameObjectToUIScreenPoint(unitIndicatorTitleText, 0.05f, 0.3f, 0.5f, true);
-            }
-
-            if (unitIndicatorTitleText != null)
+            if (Input.GetKey(KeyCode.X))
             {
-                AttachGameObjectToUIScreenPoint(unitIndicatorHpText, 0.05f, 0.26f, 0.5f, true);
+                this.currentTileMode = TileMode.Moving;
+                ResetUnitInfo();
             }
 
-            if (unitIndicatorTitleText != null)
+
+            if (Input.GetKey(KeyCode.C))
             {
-                AttachGameObjectToUIScreenPoint(unitIndicatorMoraleText, 0.05f, 0.235f, 0.5f, true);
+                this.currentTileMode = TileMode.Sight;
+                ResetUnitInfo();
             }
+
+
+            if (Input.GetKey(KeyCode.Z))
+            {
+                this.currentTileMode = TileMode.Nothing;
+                ResetUnitInfo();
+            }
+
+
+
+            if (this.currentTileMode != TileMode.Nothing) {
+                AttachGameObjectToUIScreenPoint(tileModeNothingIcon, 0.8f, 0.1f, 0.1f, false);
+            }
+            else
+            {
+                AttachGameObjectToUIScreenPoint(tileModeNothingIcon, 0.8f, 0.1f, 0.08f, false);
+            }
+
+            if (this.currentTileMode != TileMode.Sight)
+            {
+                AttachGameObjectToUIScreenPoint(tileModeSightIcon, 0.9f, 0.1f, 0.1f, false);
+            }
+            else
+            {
+                AttachGameObjectToUIScreenPoint(tileModeSightIcon, 0.9f, 0.1f, 0.08f, false);
+            }
+
+            if (this.currentTileMode != TileMode.Moving) {
+                AttachGameObjectToUIScreenPoint(tileModeMovingIcon, 0.85f, 0.1f, 0.1f, false);
+            }
+            else
+            {
+                AttachGameObjectToUIScreenPoint(tileModeMovingIcon, 0.85f, 0.1f, 0.08f, false);
+            }
+
+
+            if (userInfoActive) {
+                FindAndSetUnitInfo();
+
+                if (currentUnitInfoObject != null) {
+                    AttachGameObjectToUIScreenPoint(currentUnitInfoObject, 0.1f, 0.12f, 0.1f, false);
+                }
+
+                if (unitIndicatorTitleText != null) {
+                    AttachGameObjectToUIScreenPoint(unitIndicatorTitleText, 0.05f, 0.3f, 0.5f, true);
+                }
+
+                if (unitIndicatorTitleText != null)
+                {
+                    AttachGameObjectToUIScreenPoint(unitIndicatorHpText, 0.05f, 0.26f, 0.5f, true);
+                }
+
+                if (unitIndicatorTitleText != null)
+                {
+                    AttachGameObjectToUIScreenPoint(unitIndicatorMoraleText, 0.05f, 0.235f, 0.5f, true);
+                }
+            }
+        }
+
+        public void DeactivateUserInfo()
+        {
+            this.userInfoActive = false;
+            ResetUnitInfo();
         }
 
         public void ResetUnitInfo()
@@ -132,6 +227,8 @@ namespace Assets.src.GameController
             unitIndicatorHpText.GetComponent<TextMesh>().text = "";
             unitIndicatorMoraleText.GetComponent<TextMesh>().text = "";
             Destroy(currentUnitInfoObject);
+            userInfoPointer.transform.position = tilePlanePrefab.transform.position;
+            ResetTiles();
         }
 
         public GameObject unitIndicatorTitleText;
@@ -153,34 +250,46 @@ namespace Assets.src.GameController
 
         private List<Unit> unitInfo = new List<Unit>();
         private List<Obstacle> obstacles = new List<Obstacle>();
-        private int width;
-        private int height;
+
+        private bool userInfoActive = false;
 
         public void SetTiles(List<Point> list)
         {
-            for (int i = 0; i<tilePlanePrefabs.Count; i++)
+            if (list.Count > tilePlanePrefabs.Count)
             {
-                Destroy(tilePlanePrefabs[i]);
+                for (int i = tilePlanePrefabs.Count; i<list.Count; i++)
+                {
+                    GameObject newTP = Instantiate(tilePlanePrefab);
+                    tilePlanePrefabs.Add(newTP);
+                }
             }
 
-            tilePlanePrefabs = new List<GameObject>();
-            for (int i = 0; i<list.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
-                GameObject newTP = Instantiate(tilePlanePrefab);
-                newTP.transform.position = Geometry.GetGlobalPositionNoTowers(list[i], hd);
-                tilePlanePrefabs.Add(newTP);
+                Vector3 position = Geometry.GetGlobalPositionNoTowers(list[i], hd);
+                position.y += Geometry.CELL_SIZE * 0.1f;
+                tilePlanePrefabs[i].transform.position = position;
             }
+
+            for (int i = list.Count; i < tilePlanePrefabs.Count; i++)
+            {
+                tilePlanePrefabs[i].transform.position = tilePlanePrefab.transform.position;
+            }
+        }
+
+        public void ResetTiles()
+        {
+            SetTiles(new List<Point>());
         }
 
         private string currentSetUnitInfo = "";
 
-        public void SetUnitsInfo(List<Unit> units, List<Obstacle> obstacles, int width, int height)
+        public void SetUnitsInfo(List<Unit> units, List<Obstacle> obstacles)
         {
+            userInfoActive = true;
             currentSetUnitInfo = "";
             this.unitInfo = units;
             this.obstacles = obstacles;
-            this.width = width;
-            this.height = height;
             ResetUnitInfo();
         }
     }

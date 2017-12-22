@@ -6,11 +6,17 @@ IncomeMove = require("../../move/IncomeMove");
 class Quarry extends Unit{
     constructor(position, color){
         super(position, color);
-        this.type = "Mine";
+        this.type = "Quarry";
 
         this.size = 1;
 
-        this.height = [[1.1]];
+        this.height = [[1.0]];
+
+        this.mainHeight = 1;
+    }
+
+    updateIncome(game){
+        this.income = utils.GAME_PARAMS.INCOME.QUARRY;
     }
 
     isBuilding() {

@@ -30,6 +30,8 @@ class Barrack extends Unit {
             [1.5, 1.5, 1.5, 1.5, 1.5],
             [2.5, 1.5, 1.5, 1.5, 2.5]
         ]
+
+        this.mainHeight = 2.5;
     }
 
 

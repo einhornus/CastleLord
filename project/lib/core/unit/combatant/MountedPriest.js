@@ -21,6 +21,8 @@ class MountedPriest extends Unit{
     constructor(position, color){
         super(position, color);
         this.type = "Mounted priest";
+
+        this.mainHeight = 1.3;
     }
 
     isBuilding() {

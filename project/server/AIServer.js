@@ -46,7 +46,7 @@ var initialTroops = mapGenerator.MAP_SETTINGS_VALUES.INITIAL_TROOPS.NORMAL;
 var initialResources = mapGenerator.MAP_SETTINGS_VALUES.INITIAL_RESOURCES.NORMAL;
 var castleSize = mapGenerator.MAP_SETTINGS_VALUES.CASTLE_SIZE.NORMAL;
 
-var mapSettings = new mapGenerator.MapSettings(size, initialTroops, initialTroops, castleSize);
+var mapSettings = new MapSettings(size, initialTroops, initialTroops, castleSize);
 var map = mapGenerator.generate(mapSettings);
 var game = new Game(map);
 
@@ -90,25 +90,33 @@ io.on('connection', function (socket) {
                 actionPool.push(actions[i]);
             }
 
-            /*
+
             while(true) {
+                if (game.getCurrentUnit().color === utils.WHITE) {
+                    break;
+                }
+
                 if (game.getCurrentUnit().color === utils.NEUTRAL) {
                     var bear = game.getCurrentUnit();
                     var _moves = game.genMovesForCurrentUnit();
                     var moveIndex= bear.getMove(_moves, game)
                     var actualMove = _moves[moveIndex];
 
-                    console.log("Apply move", actualMove);
                     var _actions = game.assignMove(actualMove);
                     for (var i = 0; i < _actions.length; i++) {
                         actionPool.push(_actions[i]);
                     }
                 }
-                else{
-                    break;
+
+                if(game.getCurrentUnit().color === utils.BLACK){
+                    var actualMove = AI.move(game);
+                    var _actions = game.assignMove(actualMove);
+                    for (var i = 0; i < _actions.length; i++) {
+                        actionPool.push(_actions[i]);
+                    }
                 }
             }
-            */
+
 
             moves = game.genMovesForCurrentUnit();
             let moveAction = new YourMoveAction(game.getCurrentUnit(), moves, game);

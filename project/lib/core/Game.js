@@ -1,5 +1,6 @@
 utils = require("./utils");
 generators = require("./generators");
+AIData = require("./AIData");
 King = require("./unit/combatant/Lord");
 Peasant = require("./unit/combatant/Worker");
 Builder = require("./unit/combatant/Worker");
@@ -22,6 +23,8 @@ let DEBUG = true;
 
 class Game {
     constructor(map) {
+        this.AIData = new AIData(map.width, map.height);
+
         this.whiteTreasury = map.initialWhiteTreasury;
         this.blackTreasury = map.initialBlackTreasury;
 
@@ -38,13 +41,12 @@ class Game {
         this.blackKing = blackKing;
 
 
-        for (var i = 0; i < map.initialTroops.length; i++) {
-            this.placeUnit(map.initialTroops[i]);
-        }
-
         this.placeUnit(whiteKing);
         this.placeUnit(blackKing);
 
+        for (var i = 0; i < map.initialTroops.length; i++) {
+            this.placeUnit(map.initialTroops[i]);
+        }
 
         this.map = map;
     }
@@ -54,6 +56,7 @@ class Game {
     }
 
     placeUnit(unit) {
+        this.AIAppend(unit);
         if (unit.type !== "Tower") {
             if (this.matrix[unit.position.x][unit.position.y] !== null) {
                 throw new utils.Exception("The cell is occupied");
@@ -116,24 +119,44 @@ class Game {
     attackUnit(attacker, defender) {
         let damage = this.calculateDamage(attacker, defender);
 
+        var res = null;
         if (defender.health <= damage) {
             this.killUnit(defender);
-            return [true, damage];
+            res =  [true, damage];
         }
         else {
             defender.health -= damage;
-            return [false, damage];
+            res =  [false, damage];
         }
+        return res;
     }
 
 
     healUnit(healer, defender) {
+        this.AIDelete(defender);
         var heal = Math.min(100 - defender.health, utils.GAME_PARAMS.HEAL_VOLUME);
-        defender.heal += heal;
+        defender.health += heal;
+        defender.updateMorale(this);
+        this.AIAppend(defender);
         return heal;
     }
 
+
+    AIDelete(unit){
+        if(!unit.isBuilding()){
+            this.AIData.deleteForce(unit.getWeapon(), unit.position.x, unit.position.y, unit.getSpeed(), unit.color);
+        }
+    }
+
+    AIAppend(unit){
+        if(!unit.isBuilding()){
+            this.AIData.addForce(unit.getWeapon(), unit.position.x, unit.position.y, unit.getSpeed(), unit.color);
+        }
+    }
+
     killUnit(unit) {
+        this.AIDelete(unit);
+
         if (unit.type === "Tower") {
             this.towers[unit.position.x][unit.position.y] = null;
         }
@@ -167,13 +190,14 @@ class Game {
     }
 
     moveUnit(unit, newLocation) {
+        this.AIDelete(unit);
         if (this.matrix[newLocation.x][newLocation.y] !== null) {
             throw new utils.Exception("Can't move unit here");
         }
-
         this.matrix[unit.position.x][unit.position.y] = null;
         unit.position = new utils.Point(newLocation.x, newLocation.y);
         this.matrix[unit.position.x][unit.position.y] = unit;
+        this.AIAppend(unit);
     }
 
 
@@ -224,7 +248,7 @@ class Game {
             var currentUnit = this.getCurrentUnit();
 
 
-            if (currentUnit.type === "Wall" || currentUnit.type === "Tower") {
+            if (currentUnit.type === "Wall" || currentUnit.type === "Tower" || currentUnit.type === "Gate") {
                 this.unitPointer++;
                 if (this.unitPointer === this.units.length) {
                     this.unitPointer = 0;
@@ -243,11 +267,13 @@ class Game {
 
         let actions = move.assign(this.getCurrentUnit(), this);
 
+        this.getCurrentUnit().postMove(this);
         this.nextUnit();
         if (DEBUG) {
             this.checkInvariants();
         }
 
+        /*
         while (true) {
             if (this.getCurrentUnit().color === utils.NEUTRAL) {
                 var bear = this.getCurrentUnit();
@@ -265,6 +291,7 @@ class Game {
                 break;
             }
         }
+        */
 
         return actions;
     }
@@ -282,10 +309,10 @@ class Game {
             var unit = this.units[i];
             if (unit.color === color) {
                 if (unit.type === "Farm") {
-                    res += this.units[i].getIncome();
+                    res += this.units[i].getIncome(this);
                 }
                 else {
-                    if (!unit.isBuilding() || unit.type === "House") {
+                    if ((!unit.isBuilding() || unit.type === "House") && unit.type !== "Catapult") {
                         if (unit.color === color) {
                             res -= unit.getFoodConsumption();
                         }

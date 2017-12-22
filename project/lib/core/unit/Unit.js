@@ -23,12 +23,17 @@ class Unit {
         this.position = position;
         this.color = color;
         this.id = utils.genRandomString();
-        this.health = 100.0;
+        this.health = Math.round(100.0 * Math.random());
 
         this.foodMorale = 0;
         this.priestMorale = 0;
         this.woundedMorale = 0;
         this.lordMorale = 0;
+
+        this.income = 0;
+    }
+
+    updateIncome(game){
     }
 
     getWeapon() {
@@ -244,26 +249,20 @@ class Unit {
         }
     }
 
-    postMove(game) {
-        this.morale = 0;
-
-        if (this.isBuilding === undefined) {
-            throw new utils.Exception("Weird");
-        }
-
-        if (this.type === "House") {
-            this.consumeFood(game);
+    updateMorale(game){
+        if(game === undefined){
+            console.log("Weirdo");
         }
 
         if (!this.isBuilding() && !(this.type === "Catapult")) {
-            this.consumeFood(game);
 
             if (!(this.type === "Priest" || this.type === "Mounted priest")) {
                 var distToPriest = null;
-                for (var unit in game.units) {
+                for (var k = 0; k<game.units.length; k++) {
+                    var unit = game.units[k];
                     if (unit.color === this.color) {
-                        if (unit instanceof Priest || unit instanceof MountedPriest) {
-                            var dist = utils.dist(this.position, unit.positions);
+                        if (unit.type === "Priest" || unit.type === "Mounted priest") {
+                            var dist = utils.dist(this.position, unit.position);
                             if (distToPriest === null) {
                                 distToPriest = dist;
                             }
@@ -273,7 +272,7 @@ class Unit {
                         }
                     }
                 }
-                if (distToPriest = null) {
+                if (distToPriest !== null) {
                     var surplus = utils.GAME_PARAMS.MORALE_PRIEST_NEARBY_K / (utils.GAME_PARAMS.MORALE_PRIEST_NEARBY_O + distToPriest);
                     this.priestMorale = Math.round(surplus);
                 }
@@ -290,9 +289,27 @@ class Unit {
             }
 
             this.morale = this.woundedMorale + this.lordMorale + this.priestMorale + this.foodMorale;
-            var t = 0;
+        }
+    }
+
+    postMove(game) {
+        game.AIDelete(this);
+        this.morale = 0;
+
+        if (this.isBuilding === undefined) {
+            throw new utils.Exception("Weird");
         }
 
+        if (this.type === "House") {
+            this.consumeFood(game);
+        }
+
+        if (!this.isBuilding() && !(this.type === "Catapult")) {
+            this.consumeFood(game);
+        }
+
+        this.updateMorale(game);
+        game.AIAppend(this);
     }
 
     getMorale() {

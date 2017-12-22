@@ -9,8 +9,16 @@ class IronMine extends Unit{
         this.type = "Mine";
 
         this.size = 1;
-        this.height = [[1.1]];
+        this.height = [[1.0]];
+
+        this.mainHeight = 1;
     }
+
+
+    updateIncome(game){
+        this.income = utils.GAME_PARAMS.INCOME.MINE;
+    }
+
 
     isBuilding() {
         return true;

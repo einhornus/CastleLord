@@ -11,6 +11,8 @@ class Tower extends Unit{
         this.size = 1;
 
         this.height = [[utils.GAME_PARAMS.TOWER_HEIGHT]];
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {

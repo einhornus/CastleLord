@@ -23,6 +23,8 @@ class Church extends Unit {
             [4.5, 4.5, 4.5, 4.5, 4.5],
             [3.5, 3.5, 3.5, 3.5, 3.5],
         ]
+
+        this.mainHeight = 5.5;
     }
 
     isBuilding() {

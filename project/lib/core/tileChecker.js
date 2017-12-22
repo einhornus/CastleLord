@@ -4,7 +4,7 @@ var isTileOccupiedByBuilding = function(game, point){
     for(var i = 0; i<game.units.length; i++)
     {
         var unit = game.units[i];
-        if(unit.isBuilding()){
+        if(unit.isBuilding() && unit.type !== "Tower"){
             if(unit.isPointInsideBuilding(point)){
                 return true;
             }

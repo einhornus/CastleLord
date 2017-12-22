@@ -27,6 +27,13 @@ namespace Assets.src.GameController
             }
         }
 
+        public float DistanceFromCameraRayToObject(GameObject obj)
+        {
+            Ray ray = this.mainCamera.ScreenPointToRay(Input.mousePosition);
+            float res = Vector3.Cross(ray.direction, obj.transform.position - ray.origin).magnitude;
+            return res;
+        }
+
         public Vector3 AttachGameObjectToUIScreenPoint(GameObject go, float _x, float _y, float _z, bool sz)
         {
             float x = Screen.width*_x;
@@ -82,6 +89,11 @@ namespace Assets.src.GameController
             if (unit.Equals("Mine"))
             {
                 prefab = categoryMinePrefab;
+            }
+
+            if (unit.Equals("Quarry"))
+            {
+                prefab = categoryQuarryPrefab;
             }
 
             if (unit.Equals("Swordsman"))

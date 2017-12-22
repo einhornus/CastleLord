@@ -3,7 +3,7 @@ Action = require("./Action")
 
 
 class AttackUnitAction extends Action{
-    constructor(unit, from, to, enemy, kills, damage){
+    constructor(unit, from, to, enemy, kills, damage, weapon, armour){
         super();
 
         if(unit === undefined){
@@ -32,6 +32,8 @@ class AttackUnitAction extends Action{
         this.enemy = enemy;
         this.kills = kills;
         this.damage = damage;
+        this.weapon = weapon;
+        this.armour = armour;
         this.type = "Attack unit";
     }
 }

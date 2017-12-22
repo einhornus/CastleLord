@@ -11,6 +11,9 @@ class Bear extends Unit{
     constructor(position, color){
         super(position, color);
         this.type = "Bear";
+        this.triggerUnit = null;
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {
@@ -19,50 +22,90 @@ class Bear extends Unit{
 
 
     getMove(moves, game){
+        var attackMoves = [];
+        var relocationMoves = [];
+
+        for(var i = 0; i<moves.length; i++) {
+            moves[i].poolIndex = i;
+        }
+
         for(var i = 0; i<moves.length; i++){
             if(moves[i].type === "Attack"){
-                return i;
+                attackMoves.push(moves[i]);
+            }
+
+            if(moves[i].type === "Relocation"){
+                relocationMoves.push(moves[i]);
             }
         }
 
+        if(attackMoves.length !== 0){
+            var closest = null;
+            var minDistance = 10000;
+            for(var i = 0; i<attackMoves.length; i++){
+                var d = utils.dist(this.position, attackMoves[i].enemy.position);
+                if(d < minDistance){
+                    minDistance = d;
+                    closest = attackMoves[i].poolIndex;
+                }
+            }
+            return closest;
+        }
 
-        var lookupRadius = utils.GAME_PARAMS.SIGHT_RADIUS;
-        var triggered = false;
-        var nearestUnitPos = 0;
-        var nearestUnitDist = 1000;
-        for(var i = 0; i<game.units.length; i++){
-            var unit = game.units[i]
-            if(!unit.isBuilding()){
-                if(unit.type !== "Bear"){
-                    var d = utils.dist(this.position, unit.position);
-                    if(d <= lookupRadius){
-                        triggered = true;
-                        if(d < nearestUnitDist){
-                            nearestUnitDist = d;
-                            nearestUnitPos = unit.position;
+        var calm = true;
+        if(this.triggerUnit !== null){
+            if(Bear.isUnitInsideCastle(this.triggerUnit, game)){
+                this.triggerUnit = null;
+                calm = true;
+            }
+            else{
+                calm = false;
+            }
+        }
+
+        if(calm){
+            var bestDist = 1000;
+            var sightPoints = generators.generateSightPoints(this, game);
+            for(var i = 0; i<sightPoints.length; i++){
+                var sp = sightPoints[i];
+                if(game.matrix[sp.x][sp.y] !== null){
+                    var candidate = game.matrix[sp.x][sp.y];
+                    var dist = utils.dist(candidate.position, this.position);
+                    if (!candidate.isBuilding() && candidate.type !== "Bear") {
+                        if(dist < bestDist) {
+                            this.triggerUnit = candidate;
+                            bestDist = dist;
                         }
                     }
                 }
             }
         }
 
-        if(triggered){
-            var nearestD = 10000;
-            var res = 0;
-            for(var i = 0; i<moves.length; i++){
-                if(moves[i].type === "Relocation"){
-                    var tile = moves[i].end;
-                    var d = utils.dist(tile, nearestUnitPos);
-                    if(d < nearestD){
-                        nearestD = d;
-                        res = i;
-                    }
+
+        if(this.triggerUnit !== null) {
+            var closest = null;
+            var minDistance = 10000;
+            for (var i = 0; i < relocationMoves.length; i++) {
+                var rm = relocationMoves[i];
+                var d = utils.dist(this.triggerUnit.position, rm.end);
+                if (d < minDistance) {
+                    minDistance = d;
+                    closest = rm.poolIndex;
                 }
             }
-            return res;
+            return closest;
         }
         else{
             return moves.length - 1;
+        }
+    }
+
+    static isUnitInsideCastle(unit, game){
+        if(unit.color === utils.WHITE){
+            return game.map.whiteCastle.isInsideCastle(unit.position.x, unit.position.y);
+        }
+        else{
+            return game.map.blackCastle.isInsideCastle(unit.position.x, unit.position.y);
         }
     }
 

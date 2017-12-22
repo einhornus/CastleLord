@@ -15,5 +15,10 @@ namespace Assets.src.lib
             this.x = x;
             this.y = y;
         }
+
+        public static double Dist(float x1, float y1, float x2, float y2)
+        {
+            return Math.Sqrt((x1-x2)*(x1 - x2) + (y1 - y2) * (y1 - y2));
+        }
     }
 }

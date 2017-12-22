@@ -11,6 +11,8 @@ class Archer extends Unit{
     constructor(position, color){
         super(position, color);
         this.type = "Archer";
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {
@@ -24,9 +26,10 @@ class Archer extends Unit{
     generateMoves(game){
         let res = this.generateRelocationMoves(game);
 
-        let shootingRangePoints = generators.generatePossibleRangedPointForArcher(this, game);
+        let shootingRangePoints = generators.generatePossibleRangedPoints(this, game, false);
         for(let i = 0; i<shootingRangePoints.length; i++){
-            let mv = new ShootingMove(this.position, shootingRangePoints[i], "Arrow");
+            var enemy = game.matrix[shootingRangePoints[i].x][shootingRangePoints[i].y];
+            let mv = new ShootingMove(this.position, shootingRangePoints[i], enemy, "Arrow");
             res.push(mv);
         }
 

@@ -75,7 +75,7 @@ class AttackMove extends FootMove {
             res.push(action);
         }
 
-        let last = new AttackUnitAction(unit, this.end, this.enemy.position, enemyTroop, atRes[0], atRes[1]);
+        let last = new AttackUnitAction(unit, this.end, this.enemy.position, enemyTroop, atRes[0], atRes[1], unit.getWeapon(), this.enemy.getArmour());
         res.push(last);
 
         return res;

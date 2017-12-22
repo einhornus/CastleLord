@@ -15,5 +15,7 @@ namespace Assets.src.lib.action
         public bool kills { get; set; }
         public Unit enemy { get; set; }
         public int damage { get; set; }
+        public int weapon { get; set; }
+        public int armour { get; set; }
     }
 }

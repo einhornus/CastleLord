@@ -11,7 +11,7 @@ class Horseman extends Unit{
         super(position, color);
         this.type = "Horseman";
 
-
+        this.mainHeight = 1.3;
     }
 
     isBuilding() {

@@ -15,6 +15,8 @@ class Lord extends Knight {
     constructor(position, color) {
         super(position, color);
         this.type = "Lord";
+
+        this.mainHeight = 1.3;
     }
 
 

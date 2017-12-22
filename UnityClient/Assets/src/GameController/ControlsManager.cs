@@ -28,6 +28,7 @@ namespace Assets.src.GameController
         public GameObject categoryChurchPrefab;
         public GameObject categoryFarmPrefab;
         public GameObject categoryMinePrefab;
+        public GameObject categoryQuarryPrefab;
         public GameObject categoryWallPrefab;
         public GameObject categoryTowerPrefab;
         public GameObject categoryHousePrefab;
@@ -47,9 +48,6 @@ namespace Assets.src.GameController
 
         public GameObject currentUnitPointer;
 
-        public Material defaultMaterial;
-        public Material hoverMaterial;
-        public Material pressedMaterial;
 
 
         private List<GameObject> oldObjects = new List<GameObject>();
@@ -72,16 +70,14 @@ namespace Assets.src.GameController
 
         public void PointToUnit(Unit unit)
         {
-            this.currentUnitPointer.SetActive(true);
             Vector3 pos = Geometry.GetGlobalPosition(unit.position, hd);
-            pos.y += Geometry.CELL_SIZE * 0;
             CameraPointToUnit(unit);
-            this.currentUnitPointer.transform.localPosition = pos;
+            this.currentUnitPointer.transform.position = pos;
         }
 
         public void ResetUnitPointer()
         {
-            this.currentUnitPointer.SetActive(false);
+            this.currentUnitPointer.transform.localPosition = tilePlanePrefab.transform.localPosition;
         }
 
 
@@ -137,8 +133,8 @@ namespace Assets.src.GameController
         public Vector3 GetCategoryPosition(int index)
         {
             float x = Screen.width * 0.95f;
-            float y = Screen.height * (0.8f - index * 0.1f);
-            float z = (float)(MIN_CAMERA_H * 0.15);
+            float y = Screen.height * (0.9f - index * 0.1f);
+            float z = (float)(MIN_CAMERA_H * 0.1);
             return new Vector3(x, y, z);
         }
 
@@ -224,7 +220,7 @@ namespace Assets.src.GameController
                     prefab = GetCategoryUnitPrefab(categories[i]);
                 }
 
-                Clickable clickable = new Clickable(prefab, categories[i], 0.015, 0.02, 0.03);
+                Clickable clickable = new Clickable(prefab, categories[i], 0.02, 0.025, 0.03);
                 Move move = moves[i];
                 Vector3 pos = mainCamera.ScreenToWorldPoint(GetCategoryPosition(i));
                 categoryClickables.Add(clickable, pos);
@@ -240,8 +236,8 @@ namespace Assets.src.GameController
             category = newCategory;
 
             double normalK = 1.0;
-            double hoveredK = 1.2;
-            double pressedK = 1.5;
+            double hoveredK = 1.3;
+            double pressedK = 1.6;
 
             for (int i = 0; i < moves.Count; i++)
             {
@@ -302,7 +298,7 @@ namespace Assets.src.GameController
                         Clickable clickable = new Clickable(categoryArrowPrefab, i + "", normalK, hoveredK, pressedK);
                         Move move = moves[i];
                         Vector3 posEnemy = Geometry.GetGlobalPosition(move.target, hd);
-                        posEnemy.y += Geometry.CELL_SIZE * 1f;
+                        posEnemy.y += Geometry.CELL_SIZE * (float)move.enemy.mainHeight * 1f;
                         moveClickables.Add(clickable, posEnemy);
                     }
                 }
@@ -327,7 +323,7 @@ namespace Assets.src.GameController
                         Clickable clickable = new Clickable(categoryStonePrefab, i + "", normalK, hoveredK, pressedK);
                         Move move = moves[i];
                         Vector3 posEnemy = Geometry.GetGlobalPosition(move.target, hd);
-                        posEnemy.y += Geometry.CELL_SIZE * 2f;
+                        posEnemy.y += Geometry.CELL_SIZE * (float)move.enemy.mainHeight * 1.0f;
                         moveClickables.Add(clickable, posEnemy);
                     }
                 }
@@ -378,6 +374,7 @@ namespace Assets.src.GameController
 
         public void SendMove(int index)
         {
+            DeactivateUserInfo();
             ResetUnitPointer();
             if (moveSendingActive)
             {

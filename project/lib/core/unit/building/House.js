@@ -16,6 +16,11 @@ class House extends Unit{
             [3.0, 3.0, 3.0],
         ]
 
+        this.mainHeight = 4;
+    }
+
+    updateIncome(game){
+        this.income = utils.GAME_PARAMS.INCOME.HOUSE;
     }
 
     isBuilding() {

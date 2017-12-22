@@ -117,26 +117,13 @@ namespace Assets.src.GameController
                 {
                     InitGame(((InitGameAction)(action)).game);
                 }
+
                 if (action is YourMoveAction)
                 {
                     YourMoveAction yma = (YourMoveAction)action;
-
-                    SetUnitsInfo(yma.units, yma.obstacles, yma.width, yma.height);
-                    SetTreasury(yma);
-
-                    Debug.Log(yma.moves.Count);
-                    if (yma.moves.Count > 1)
-                    {
-                        this.SetMoves(yma.moves);
-                        PointToUnit(yma.unit);
-                    }
-                    else
-                    {
-                        this.moveSendingActive = true;
-                        Debug.Log("Send idle");
-                        SendMove(0);
-                    }
+                    YouMoveReaction(yma);
                 }
+
                 if (action is MoveUnitAction)
                 {
                     this.MoveUnit((MoveUnitAction)action);
@@ -149,7 +136,7 @@ namespace Assets.src.GameController
 
                 if (action is AppearUnitAction)
                 {
-                    this.AppearUnit(((AppearUnitAction)action).unit);
+                    this.BuildUnit((AppearUnitAction)action);
                 }
 
                 if (action is HealUnitAction)

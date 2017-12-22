@@ -9,6 +9,7 @@ Church = require("../unit/building/Church");
 Wall = require("../unit/building/Wall");
 Gate = require("../unit/building/Gate");
 Tower = require("../unit/building/Tower");
+MapSettings = require("./MapSettings");
 
 
 getGaussianNumber = function (mean, stdDerivation) {
@@ -33,7 +34,8 @@ class MapCastle {
             return {x: obj.y + this.centerX, y: obj.x + this.centerY};
         }
         else {
-            return {x: obj.x + this.centerX, y: obj.y + this.centerY};;
+            return {x: obj.x + this.centerX, y: obj.y + this.centerY};
+            ;
         }
     }
 
@@ -55,17 +57,17 @@ class MapCastle {
 
     getTowers() {
         var res = [];
-        res.push(this.getPoint({x: -this.getWidthX()+1, y: -this.getWidthY()+1}));
-        res.push(this.getPoint({x: this.getWidthX()-1, y: -this.getWidthY()+1}));
-        res.push(this.getPoint({x: this.getWidthX()-1, y: this.getWidthY()-1}));
-        res.push(this.getPoint({x: -this.getWidthX()+1, y: this.getWidthY()-1}));
+        res.push(this.getPoint({x: -this.getWidthX() + 1, y: -this.getWidthY() + 1}));
+        res.push(this.getPoint({x: this.getWidthX() - 1, y: -this.getWidthY() + 1}));
+        res.push(this.getPoint({x: this.getWidthX() - 1, y: this.getWidthY() - 1}));
+        res.push(this.getPoint({x: -this.getWidthX() + 1, y: this.getWidthY() - 1}));
         return res
     }
 
     getWalls() {
         var res = [];
         for (var i = -this.getWidthX(); i <= this.getWidthX(); i++) {
-            if(i !== 0) {
+            if (i !== 0) {
                 var x = i;
                 var y1 = -this.getWidthY();
                 var y2 = this.getWidthY();
@@ -78,7 +80,7 @@ class MapCastle {
             }
         }
 
-        for (var i = -this.getWidthY()+1; i <= this.getWidthY()-1; i++) {
+        for (var i = -this.getWidthY() + 1; i <= this.getWidthY() - 1; i++) {
             var y = i;
             var x1 = -this.getWidthX();
             var x2 = this.getWidthX();
@@ -114,64 +116,6 @@ function randomInteger(min, max) {
     return rand;
 }
 
-var MAP_SETTINGS_VALUES = {
-    SIZE: {
-        NORMAL: 1
-    },
-
-    CASTLE_SIZE: {
-        NORMAL: 1
-    },
-
-    INITIAL_TROOPS: {
-        NORMAL: 1
-    },
-
-    INITIAL_RESOURCES: {
-        NORMAL: 1
-    }
-}
-
-
-class MapSettings {
-    constructor(size, initialTroops, initialResources, castleSize) {
-        if (size === MAP_SETTINGS_VALUES.SIZE.NORMAL) {
-            this.sizeX = 84;
-            this.sizeY = 48;
-        }
-
-        if (initialTroops === MAP_SETTINGS_VALUES.INITIAL_TROOPS.NORMAL) {
-            this.archers = 2;
-        }
-
-        if (initialResources === MAP_SETTINGS_VALUES.INITIAL_RESOURCES.NORMAL) {
-            this.initialFood = 200;
-            this.initialGold = 500;
-            this.initialStone = 500;
-            this.initialIron = 500;
-        }
-
-        if (castleSize === MAP_SETTINGS_VALUES.CASTLE_SIZE.NORMAL) {
-            this.castleSizeX = 20;
-            this.castleSizeY = 15;
-        }
-
-        this.forestFrequencyMean = 0.01;
-        this.forestFrequencyDerivation = 0.003;
-        this.forestSizeMean = 4;
-        this.forestSizeDerivation = 2;
-        this.forestDistanceMean = 2;
-        this.forestDistanceDerivation = 1;
-
-        this.goldDepositFrequency = 0.000;
-        this.ironDepositFrequency = 0.001;
-        this.stoneDepositFrequency = 0.001;
-        this.waterFrequency = 0.001;
-        this.bearFrequency = 0.005;
-
-    }
-}
-
 getPlaceForACastle = function (sizeX, sizeY, color, castleSize) {
     var minX = null;
     var maxX = null;
@@ -196,17 +140,15 @@ getPlaceForACastle = function (sizeX, sizeY, color, castleSize) {
 }
 
 
-genPoints = function (map, frequency, whiteCastle, blackCastle) {
+genPoints = function (map, count, whiteCastle, blackCastle) {
     var res = [];
-    for (var i = 0; i < map.width; i++) {
-        for (var j = 0; j < map.height; j++) {
-            var point = new utils.Point(i, j);
-            if (Math.random() < frequency) {
-                if (map.isEmpty(point)) {
-                    if (!whiteCastle.isInsideCastle(i, j) && !blackCastle.isInsideCastle(i, j)) {
-                        res.push(point);
-                    }
-                }
+    for (var i = 0; i < count; i++) {
+        var x = Math.round(Math.random() * (map.width - 1));
+        var y = Math.round(Math.random() * (map.height - 1));
+        var point = new utils.Point(x, y);
+        if (map.isEmpty(point)) {
+            if (!whiteCastle.isInsideCastle(x, y) && !blackCastle.isInsideCastle(x, y)) {
+                res.push(point);
             }
         }
     }
@@ -231,6 +173,8 @@ tryGenerate = function (settings) {
     var blackCastle = new MapCastle(placeForBlackCastle.x, placeForBlackCastle.y, settings.castleSizeX, settings.castleSizeY, blackCastleInverted);
 
 
+
+
     var whiteTowers = whiteCastle.getTowers();
     for (var i = 0; i < whiteTowers.length; i++) {
         var tower = whiteTowers[i];
@@ -245,6 +189,7 @@ tryGenerate = function (settings) {
         var blackTower = new Tower(new utils.Point(tower.x, tower.y), utils.BLACK);
         map.initialTroops.push(blackTower);
     }
+
 
 
     var whiteWalls = whiteCastle.getWalls();
@@ -263,7 +208,6 @@ tryGenerate = function (settings) {
     }
 
 
-
     var whiteGates = whiteCastle.getGates();
     for (var i = 0; i < whiteGates.length; i++) {
         var gate = whiteGates[i];
@@ -280,16 +224,14 @@ tryGenerate = function (settings) {
     }
 
 
-
     map.initialWhiteTreasury = new Treasury(settings.initialGold, settings.initialIron, settings.initialStone, settings.initialFood);
     map.initialBlackTreasury = new Treasury(settings.initialGold, settings.initialIron, settings.initialStone, settings.initialFood);
 
     map.initialWhiteKingPosition = new utils.Point(placeForWhiteCastle.x, placeForWhiteCastle.y);
     map.initialBlackKingPosition = new utils.Point(placeForBlackCastle.x, placeForBlackCastle.y);
 
-
     var trees = 0;
-    var forestCount = Math.round(getGaussianNumber(settings.forestFrequencyMean, settings.forestFrequencyDerivation) * map.width * map.height);
+    var forestCount = settings.forestCount;
 
     for (var i = 0; i < forestCount; i++) {
         var centerX = randomInteger(-mapOffset, map.width + mapOffset);
@@ -311,97 +253,326 @@ tryGenerate = function (settings) {
     }
 
 
-    var whiteWorker = new Worker(new utils.Point(map.initialWhiteKingPosition.x + 1, map.initialWhiteKingPosition.y), utils.WHITE);
-    var blackWorker = new Worker(new utils.Point(map.initialBlackKingPosition.x + 1, map.initialBlackKingPosition.y), utils.BLACK);
-
-    //var whiteArcher = new Archer(new utils.Point(map.initialBlackKingPosition.x + 3, map.initialBlackKingPosition.y), utils.WHITE);
-    //var whiteCatapult = new Catapult(new utils.Point(map.initialBlackKingPosition.x + 2, map.initialBlackKingPosition.y), utils.WHITE);
-    //var blackBarrack = new Barrack(new utils.Point(map.initialBlackKingPosition.x + 5, map.initialBlackKingPosition.y), utils.BLACK);
-
-
-    //map.initialTroops.push(whiteArcher);
-    //map.initialTroops.push(whiteCatapult);
-    //map.initialTroops.push(blackBarrack);
-
-
-    var whiteArcher = new Archer(new utils.Point(map.initialWhiteKingPosition.x - 1 , map.initialWhiteKingPosition.y - 1), utils.WHITE);
-
-    map.addWater(new utils.Point(map.initialWhiteKingPosition.x + 15, map.initialWhiteKingPosition.y + 15))
-
-    var whiteFarm = new Farm(new utils.Point(map.initialWhiteKingPosition.x + 13, map.initialWhiteKingPosition.y + 13), utils.WHITE);
-    var whiteBarracks = new Barrack(new utils.Point(map.initialWhiteKingPosition.x + 3, map.initialWhiteKingPosition.y + 3), utils.WHITE);
-    var whiteChurch = new Church(new utils.Point(map.initialWhiteKingPosition.x - 1, map.initialWhiteKingPosition.y + 5), utils.WHITE);
-    var whiteWorker = new Worker(new utils.Point(map.initialWhiteKingPosition.x - 5, map.initialWhiteKingPosition.y - 5), utils.WHITE);
-    var blackCatapult = new Catapult(new utils.Point(map.initialWhiteKingPosition.x + 3, map.initialWhiteKingPosition.y + 0), utils.WHITE);
-    var whiteHouse = new House(new utils.Point(map.initialWhiteKingPosition.x - 3, map.initialWhiteKingPosition.y - 3), utils.WHITE);
-    var whitePriest = new Priest(new utils.Point(map.initialWhiteKingPosition.x - 4, map.initialWhiteKingPosition.y - 4), utils.WHITE);
-    var blackSpearman = new Spearman(new utils.Point(map.initialWhiteKingPosition.x - 0, map.initialWhiteKingPosition.y + 2), utils.BLACK);
-
-    whiteWorker.health = 80;
-
-    //var bear = new Bear(new utils.Point(map.initialWhiteKingPosition.x - 2, map.initialWhiteKingPosition.y - 4), utils.NEUTRAL);
-    //map.initialTroops.push(bear);
-
-    //map.initialTroops.push(whiteWorker);
-    //map.initialTroops.push(blackCatapult);
-    //smap.initialTroops.push(whiteFarm);
-
-    var tower = new Tower(whiteArcher.position, utils.WHITE);
-    //map.initialTroops.push(tower);
-
-
-    //map.initialTroops.push(whiteArcher);
-    //map.initialTroops.push(whiteBarracks);
-    map.initialTroops.push(blackSpearman);
-
-    map.initialTroops.push(whiteChurch);
-    map.initialTroops.push(whiteHouse);
-
-    /*
-    for (var i = 0; i < settings.archers; i++) {
-        var posForWhiteArcher = whiteTowers[i];
-        var posForBlackArcher = blackTowers[i];
-
-        var whiteArcher = new Archer(new utils.Point(posForWhiteArcher.x, posForWhiteArcher.y), utils.WHITE);
-        var blackArcher = new Archer(new utils.Point(posForBlackArcher.x, posForBlackArcher.y), utils.BLACK);
-
-        map.initialTroops.push(whiteArcher);
-        map.initialTroops.push(blackArcher);
-    }
-    */
-    
-
-    var goldDepositPoints = genPoints(map, settings.goldDepositFrequency, whiteCastle, blackCastle);
+    var goldDepositPoints = genPoints(map, settings.goldDepositCount, whiteCastle, blackCastle);
     for (var i = 0; i < goldDepositPoints.length; i++) {
         map.addGoldDeposit(goldDepositPoints[i]);
     }
 
-    var ironDepositPoints = genPoints(map, settings.ironDepositFrequency, whiteCastle, blackCastle);
+    var ironDepositPoints = genPoints(map, settings.ironDepositCount, whiteCastle, blackCastle);
     for (var i = 0; i < ironDepositPoints.length; i++) {
         map.addIronDeposit(ironDepositPoints[i]);
     }
 
-    var stoneDepositPoints = genPoints(map, settings.stoneDepositFrequency, whiteCastle, blackCastle);
+    var stoneDepositPoints = genPoints(map, settings.stoneDepositCount, whiteCastle, blackCastle);
     for (var i = 0; i < stoneDepositPoints.length; i++) {
         map.addStoneDeposit(stoneDepositPoints[i]);
     }
 
-    var waterPoints = genPoints(map, settings.waterFrequency, whiteCastle, blackCastle);
+    var waterPoints = genPoints(map, settings.waterCount, whiteCastle, blackCastle);
     for (var i = 0; i < waterPoints.length; i++) {
         map.addWater(waterPoints[i]);
     }
 
 
-    var bearPoints = genPoints(map, settings.bearFrequency, whiteCastle, blackCastle);
+    /*
+    var bearPoints = genPoints(map, settings.bearCount, whiteCastle, blackCastle);
     for (var i = 0; i < bearPoints.length; i++) {
-        //var color = Math.random()<0.5?utils.WHITE:utils.BLACK;
         var color = utils.NEUTRAL;
         var bear = new Bear(bearPoints[i], color);
         map.initialTroops.push(bear);
     }
+    */
 
+
+    map.whiteCastle = whiteCastle;
+    map.blackCastle = blackCastle;
+
+    addRandomUnits(map);
 
     return map;
+}
+
+
+addRandomUnits = function (map) {
+    var workers = 10;
+    var priests = 0;
+    var mountedPriests = 0;
+    var swordsmen = 0;
+    var spearmen = 0;
+    var horsemen = 0;
+    var knights = 0;
+    var catapults = 0;
+    var archers = 0;
+
+    var barracks = 0;
+    var churches = 0;
+    var farms = 4;
+    var houses = 0;
+    var isEnemy = false;
+
+    for (var i = 0; i < workers; i++) {
+
+        var pointForWorkerWhite = getPointForUnit(map, 1);
+        var workerWhite = new Worker(pointForWorkerWhite, utils.WHITE);
+        map.initialTroops.push(workerWhite);
+
+
+        if (isEnemy) {
+            var pointForWorkerBlack = getPointForUnit(map, 1);
+            var workerBlack = new Worker(pointForWorkerBlack, utils.BLACK);
+            map.initialTroops.push(workerBlack);
+        }
+    }
+
+    for (var i = 0; i < priests; i++) {
+        var pointForPriestWhite = getPointForUnit(map, 1);
+        var priestWhite = new Priest(pointForPriestWhite, utils.WHITE);
+        map.initialTroops.push(priestWhite);
+
+        if (isEnemy) {
+            var pointForPriestBlack = getPointForUnit(map, 1);
+            var priestBlack = new Priest(pointForPriestBlack, utils.BLACK);
+            map.initialTroops.push(priestBlack);
+        }
+    }
+
+
+    for (var i = 0; i < mountedPriests; i++) {
+
+        var pointForMountedPriestWhite = getPointForUnit(map, 1);
+        var mountedPriestWhite = new MountedPriest(pointForMountedPriestWhite, utils.WHITE);
+        map.initialTroops.push(mountedPriestWhite);
+
+        if (isEnemy) {
+            var pointForMountedPriestBlack = getPointForUnit(map, 1);
+            var mountedPriestBlack = new MountedPriest(pointForMountedPriestBlack, utils.BLACK);
+            map.initialTroops.push(mountedPriestBlack);
+        }
+    }
+
+    for (var i = 0; i < swordsmen; i++) {
+
+        var pointForSwordsmanWhite = getPointForUnit(map, 1);
+        var swordsmanWhite = new Swordsman(pointForSwordsmanWhite, utils.WHITE);
+        map.initialTroops.push(swordsmanWhite);
+
+        if (isEnemy) {
+
+            var pointForSwordsmanBlack = getPointForUnit(map, 1);
+            var swordsmanBlack = new Swordsman(pointForSwordsmanBlack, utils.BLACK);
+            map.initialTroops.push(swordsmanBlack);
+        }
+    }
+
+
+    for (var i = 0; i < spearmen; i++) {
+
+        var pointForSpearmanWhite = getPointForUnit(map, 1);
+        var spearmanWhite = new Spearman(pointForSpearmanWhite, utils.WHITE);
+        map.initialTroops.push(spearmanWhite);
+
+        if (isEnemy) {
+
+            var pointForSpearmanBlack = getPointForUnit(map, 1);
+            var spearmanBlack = new Spearman(pointForSpearmanBlack, utils.BLACK);
+            map.initialTroops.push(spearmanBlack);
+        }
+    }
+
+
+    for (var i = 0; i < horsemen; i++) {
+
+        var pointForHorsemanWhite = getPointForUnit(map, 1);
+        var horsemanWhite = new Horseman(pointForHorsemanWhite, utils.WHITE);
+        map.initialTroops.push(horsemanWhite);
+
+        if (isEnemy) {
+
+            var pointForHorsemanBlack = getPointForUnit(map, 1);
+            var horsemanBlack = new Horseman(pointForHorsemanBlack, utils.BLACK);
+            map.initialTroops.push(horsemanBlack);
+        }
+    }
+
+
+    for (var i = 0; i < knights; i++) {
+
+        var pointForKnightWhite = getPointForUnit(map, 1);
+        var knightWhite = new Knight(pointForKnightWhite, utils.WHITE);
+        map.initialTroops.push(knightWhite);
+
+
+        if (isEnemy) {
+
+            var pointForKnightBlack = getPointForUnit(map, 1);
+            var knightBlack = new Knight(pointForKnightBlack, utils.BLACK);
+            map.initialTroops.push(knightBlack);
+        }
+    }
+
+
+    for (var i = 0; i < archers; i++) {
+
+        var pointForArcherWhite = getPointForUnit(map, 1);
+        var archerWhite = new Archer(pointForArcherWhite, utils.WHITE);
+        map.initialTroops.push(archerWhite);
+
+        if (isEnemy) {
+
+            var pointForArcherBlack = getPointForUnit(map, 1);
+            var archerBlack = new Archer(pointForArcherBlack, utils.WHITE);
+            map.initialTroops.push(archerBlack);
+        }
+    }
+
+
+    for (var i = 0; i < catapults; i++) {
+        var pointForCatapultWhite = getPointForUnit(map, 1);
+        var catapultWhite = new Catapult(pointForCatapultWhite, utils.WHITE);
+        map.initialTroops.push(catapultWhite);
+
+        if (isEnemy) {
+
+            var pointForCatapultBlack = getPointForUnit(map, 1);
+            var catapultBlack = new Catapult(pointForCatapultBlack, utils.BLACK);
+            map.initialTroops.push(catapultBlack);
+        }
+    }
+
+
+    for (var i = 0; i < barracks; i++) {
+        var pointForBarrackWhite = getPointForUnit(map, 5);
+        var barrackWhite = new Barrack(pointForBarrackWhite, utils.WHITE);
+        map.initialTroops.push(barrackWhite);
+
+        if (isEnemy) {
+            var pointForBarrackBlack = getPointForUnit(map, 5);
+            var barrackBlack = new Barrack(pointForBarrackBlack, utils.BLACK);
+            map.initialTroops.push(barrackBlack);
+        }
+    }
+
+    for (var i = 0; i < churches; i++) {
+        var pointForChurchWhite = getPointForUnit(map, 5);
+        var churchWhite = new Church(pointForChurchWhite, utils.WHITE);
+        map.initialTroops.push(churchWhite);
+
+        if (isEnemy) {
+
+            var pointForChurchBlack = getPointForUnit(map, 5);
+            var churchBlack = new Church(pointForChurchBlack, utils.BLACK);
+            map.initialTroops.push(churchBlack);
+        }
+    }
+
+
+    for (var i = 0; i < farms; i++) {
+        var pointForFarmWhite = getPointForUnit(map, 3);
+        var farmWhite = new Farm(pointForFarmWhite, utils.WHITE);
+        map.initialTroops.push(farmWhite);
+
+        if (isEnemy) {
+            var pointForFarmBlack = getPointForUnit(map, 3);
+            var farmBlack = new Farm(pointForFarmBlack, utils.BLACK);
+            map.initialTroops.push(farmBlack);
+        }
+    }
+
+
+    for (var i = 0; i < houses; i++) {
+        var pointForHouseWhite = getPointForUnit(map, 3);
+        var houseWhite = new House(pointForHouseWhite, utils.WHITE);
+        map.initialTroops.push(houseWhite);
+
+        if (isEnemy) {
+            var pointForHouseBlack = getPointForUnit(map, 3);
+            var houseBlack = new House(pointForHouseBlack, utils.BLACK);
+            map.initialTroops.push(houseBlack);
+        }
+    }
+
+
+    for (var i = 0; i < map.landscapeStoneDeposits.length; i++) {
+        var color;
+        if (Math.random() <= 0.5) {
+            color = utils.WHITE;
+        }
+        else {
+            color = utils.BLACK;
+        }
+
+        var mine = new Quarry(map.landscapeStoneDeposits[i], color);
+        map.initialTroops.push(mine);
+    }
+
+
+    for (var i = 0; i < map.landscapeIronDeposits.length; i++) {
+        var color;
+        if (Math.random() <= 0.5) {
+            color = utils.WHITE;
+        }
+        else {
+            color = utils.BLACK;
+        }
+
+        var mine = new IronMine(map.landscapeIronDeposits[i], color);
+        map.initialTroops.push(mine);
+    }
+}
+
+
+getPointForUnit = function (map, size) {
+    while (true) {
+        var x = Math.round(Math.random() * (map.width - 1 - size));
+        var y = Math.round(Math.random() * (map.height - 1 - size));
+
+        var canPlace = true;
+        for (var i = 0; i < size; i++) {
+            if(!canPlace){
+                break;
+            }
+            for (var j = 0; j < size; j++) {
+                if (!map.empty[i][j]) {
+                    canPlace = false;
+                    break;
+                }
+            }
+        }
+
+        if (canPlace) {
+            var inTroops = map.initialTroops;
+            var good = true;
+
+            var pos = new utils.Point(x + Math.floor(size / 2), y + Math.floor(size / 2));
+
+            for (var i = 0; i < inTroops.length; i++) {
+                var troop = inTroops[i];
+
+                var inTroopSize = 1;
+                if (inTroops[i].size !== undefined) {
+                    inTroopSize = inTroops[i].size;
+                }
+
+                var neededD = Math.floor(size / 2) + Math.floor(inTroopSize / 2);
+
+                var c1 = Math.abs(troop.position.x - pos.x) <= neededD;
+                var c2 = Math.abs(troop.position.y - pos.y) <= neededD;
+
+
+                if (c1 && c2) {
+                    good = false;
+                    console.log("Can't place (" + pos.x + ":" + pos.y + ")" + size + " " + troop.type + " (" + troop.position.x+":"+troop.position.y+")");
+                    break;
+                }
+            }
+            if (good) {
+                return pos;
+            }
+        }
+        else{
+            console.log("Can't place " + size);
+        }
+    }
 }
 
 
@@ -437,7 +608,7 @@ getBalance = function (map) {
     var res = Math.abs((points1 - points2));
 
 
-    if(points1 < 0.01 || points2 < 0.01){
+    if (points1 < 0.01 || points2 < 0.01) {
         res += 0.05;
     }
 
@@ -445,23 +616,22 @@ getBalance = function (map) {
 }
 
 generate = function (settings) {
-    tries = 100;
+    tries = 1;
     bestBalance = null;
     bestMap = null;
     for (var i = 0; i < tries; i++) {
         var generatedMap = tryGenerate(settings);
         var balance = getBalance(generatedMap);
-        console.log(balance*1000);
+        console.log(balance * 1000);
         if (bestBalance === null || balance < bestBalance) {
             bestBalance = balance;
             bestMap = generatedMap;
         }
     }
 
-    console.log("BB = ", bestBalance*1000);
+    console.log("BB = ", bestBalance * 1000);
     return bestMap;
 }
 
 module.exports.generate = generate;
-module.exports.MapSettings = MapSettings;
-module.exports.MAP_SETTINGS_VALUES = MAP_SETTINGS_VALUES;
+module.exports.MAP_SETTINGS_VALUES = MapSettings.MAP_SETTINGS_VALUES;

@@ -11,6 +11,8 @@ class Swordsman extends Unit{
     constructor(position, color){
         super(position, color);
         this.type = "Swordsman";
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {

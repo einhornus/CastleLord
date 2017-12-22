@@ -33,37 +33,6 @@ namespace Assets.src.GameController
                 Vector3 position = Geometry.GetGlobalPosition(x, y, hd);
                 GameObject spawnedObject = Instantiate(prefab, position, prefab.transform.rotation);
                 Geometry.SetRotationY(spawnedObject, random.NextDouble() * 360);
-                
-
-                /*
-                float x = map.landscapeTrees[i].x / 1000f;
-                float y = map.landscapeTrees[i].y / 1000f;
-                //Vector3 position = Geometry.GetGlobalPosition(x, y, hd);
-
-
-                Vector3 position = new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
-
-
-                var instance = new TreeInstance();
-                instance.position = position;
-                instance.color = Color.white;
-                instance.lightmapColor = Color.white;
-                instance.prototypeIndex = (random.Next() % 3);
-
-                terrain.AddTreeInstance(instance);
-                */
-            }
-
-
-            for (int i = 0; i<map.landscapeGoldDeposits.Count; i++)
-            {
-                GameObject prefab = goldDepositPrefabs[(random.Next() % goldDepositPrefabs.Length)];
-                float x = map.landscapeGoldDeposits[i].x;
-                float y = map.landscapeGoldDeposits[i].y;
-                Vector3 position = Geometry.GetGlobalPosition(x, y, hd);
-                position.y += (float)(Geometry.CELL_SIZE * 0.2);
-                GameObject spawnedObject = Instantiate(prefab, position, prefab.transform.rotation);
-                Geometry.SetRotationY(spawnedObject, random.NextDouble() * 360);
             }
 
             for (int i = 0; i < map.landscapeIronDeposits.Count; i++)

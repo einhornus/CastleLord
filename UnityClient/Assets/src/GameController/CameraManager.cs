@@ -17,26 +17,26 @@ namespace Assets.src.GameController
         private int mapWidth = 0;
         private int mapHeight = 0;
         private double h = 30;
-        private double currentX = 0;
-        private double currentY;
+        public double currentX = 0;
+        public double currentY = 0;
 
         public static double CAMERA_SENSE_MOVING = 0.005;
         public static double CAMERA_SENSE_ROTATION = 1;
-        public static double CAMERA_FLOW_SPEED = 0.005;
+        public static double CAMERA_FLOW_SPEED = 0.001;
 
-        private double MAX_CAMERA_H = 100;
+        private double MAX_CAMERA_H = 60;
         private double MIN_CAMERA_H = 8;
         private double MIN_ISOMETRY_ANGLE = 3;
         private double MAX_ISOMETRY_ANGLE = 40;
 
-        private Vector2? cameraFlowTo = null;
+        public Vector2? cameraFlowTo = null;
         public GameObject light;
 
         public double GetIsometryAngle(double h)
         {
-            double x = (h - MIN_CAMERA_H)/(MAX_CAMERA_H);
-            double func = Math.Cos(x*Math.PI/2.0);
-            double angle = MIN_ISOMETRY_ANGLE + (MAX_ISOMETRY_ANGLE - MIN_ISOMETRY_ANGLE)*func;
+            double x = (h - MIN_CAMERA_H) / (MAX_CAMERA_H);
+            double func = Math.Cos(x * Math.PI / 2.0);
+            double angle = MIN_ISOMETRY_ANGLE + (MAX_ISOMETRY_ANGLE - MIN_ISOMETRY_ANGLE) * func;
             return angle;
         }
 
@@ -71,7 +71,7 @@ namespace Assets.src.GameController
             this.currentY = y;
 
             double isAngle = GetIsometryAngle(this.h);
-            Geometry.SetRotationX(mainCamera, 90-isAngle);
+            Geometry.SetRotationX(mainCamera, 90 - isAngle);
             double alpha = Geometry.GradusiToRadians(90 - Geometry.GetRotationX(mainCamera));
             double beta = Geometry.GradusiToRadians(Geometry.GetRotationY(mainCamera));
 
@@ -98,7 +98,6 @@ namespace Assets.src.GameController
             Geometry.SetRotationX(light, Geometry.GetRotationX(mainCamera));
             Geometry.SetRotationY(light, Geometry.GetRotationY(mainCamera));
             Geometry.SetRotationZ(light, Geometry.GetRotationZ(mainCamera));
-
         }
 
         public void SetupCamera(int mapWidth, int mapHeight)
@@ -106,7 +105,7 @@ namespace Assets.src.GameController
             this.mapWidth = mapWidth;
             this.mapHeight = mapHeight;
 
-            FocusOn(mapWidth/2, mapHeight/2);
+            FocusOn(mapWidth / 2, mapHeight / 2);
         }
 
         public void CameraPointToPoint(Point point)
@@ -118,83 +117,76 @@ namespace Assets.src.GameController
         public void CameraPointToUnit(Unit unit)
         {
             CameraPointToPoint(unit.position);
-
         }
 
         public void UpdateCamera()
         {
             //Debug.Log(Input.mousePosition.x +" "+ Input.mousePosition.y+" "+Screen.width+" "+Screen.height);
-
-
-            if (Input.GetKey(KeyCode.LeftArrow))
+            if (cameraFlowTo == null)
             {
-                double rotation = Geometry.GetRotationY(mainCamera);
-                double newRotation = rotation - CAMERA_SENSE_ROTATION;
-                Geometry.SetRotationY(mainCamera, (float)newRotation);
-                FocusOn(currentX, currentY);
-            }
+                if (Input.GetKey(KeyCode.LeftArrow))
+                {
+                    double rotation = Geometry.GetRotationY(mainCamera);
+                    double newRotation = rotation - CAMERA_SENSE_ROTATION;
+                    Geometry.SetRotationY(mainCamera, (float)newRotation);
+                    FocusOn(currentX, currentY);
+                }
 
-            if (Input.GetKey(KeyCode.RightArrow))
-            {
-                double rotation = Geometry.GetRotationY(mainCamera);
-                double newRotation = rotation + CAMERA_SENSE_ROTATION;
-                Geometry.SetRotationY(mainCamera, (float)newRotation);
-                FocusOn(currentX, currentY);
-            }
+                if (Input.GetKey(KeyCode.RightArrow))
+                {
+                    double rotation = Geometry.GetRotationY(mainCamera);
+                    double newRotation = rotation + CAMERA_SENSE_ROTATION;
+                    Geometry.SetRotationY(mainCamera, (float)newRotation);
+                    FocusOn(currentX, currentY);
+                }
 
-            double dx = 0;
-            double dy = 0;
+                double dx = 0;
+                double dy = 0;
 
-            if (Input.GetKey(KeyCode.A))
-            {
-                dx -= CAMERA_SENSE_MOVING * h;
-            }
+                if (Input.GetKey(KeyCode.A))
+                {
+                    dx -= CAMERA_SENSE_MOVING * h;
+                }
 
-            if (Input.GetKey(KeyCode.D))
-            {
-                dx += CAMERA_SENSE_MOVING * h;
-            }
+                if (Input.GetKey(KeyCode.D))
+                {
+                    dx += CAMERA_SENSE_MOVING * h;
+                }
 
-            if (Input.GetKey(KeyCode.S))
-            {
-                dy -= CAMERA_SENSE_MOVING * h;
-            }
+                if (Input.GetKey(KeyCode.S))
+                {
+                    dy -= CAMERA_SENSE_MOVING * h;
+                }
 
-            if (Input.GetKey(KeyCode.W))
-            {
-                dy += CAMERA_SENSE_MOVING * h;
-            }
+                if (Input.GetKey(KeyCode.W))
+                {
+                    dy += CAMERA_SENSE_MOVING * h;
+                }
 
-
-            if (dx != 0 || dy != 0)
-            {
-                cameraFlowTo = null;
-
-
-                double beta = -Geometry.GradusiToRadians(Geometry.GetRotationY(mainCamera));
-                double actualDx = dx * Math.Cos(beta) - dy * Math.Sin(beta);
-                double actualDy = dx * Math.Sin(beta) + dy * Math.Cos(beta);
-
-                FocusOn(currentX + actualDx, currentY + actualDy);
+                if (dx != 0 || dy != 0)
+                {
+                    double beta = -Geometry.GradusiToRadians(Geometry.GetRotationY(mainCamera));
+                    double actualDx = dx * Math.Cos(beta) - dy * Math.Sin(beta);
+                    double actualDy = dx * Math.Sin(beta) + dy * Math.Cos(beta);
+                    FocusOn(currentX + actualDx, currentY + actualDy);
+                }
             }
             else
             {
-                if (cameraFlowTo != null)
+                Vector2 vector = cameraFlowTo.Value - new Vector2((float)this.currentX, (float)this.currentY);
+                double speed = CAMERA_FLOW_SPEED * h * GAME_SPEED;
+
+                speed *= (vector.magnitude + 3.0);
+
+                if (vector.magnitude > speed)
                 {
-                    Vector2 vector = cameraFlowTo.Value - new Vector2((float)this.currentX, (float)this.currentY);
-                    double speed = CAMERA_FLOW_SPEED * h * GAME_SPEED;
-
-                    speed *= vector.magnitude;
-
-                    if (vector.magnitude > speed) {
-                        vector.Normalize();
-                        vector = vector * (float)(speed);
-                        FocusOn(currentX + vector.x, currentY + vector.y);
-                    }
-                    else
-                    {
-                        FocusOn(cameraFlowTo.Value.x, cameraFlowTo.Value.y);
-                    }
+                    vector.Normalize();
+                    vector = vector * (float)(speed);
+                    FocusOn(currentX + vector.x, currentY + vector.y);
+                }
+                else
+                {
+                    FocusOn(cameraFlowTo.Value.x, cameraFlowTo.Value.y);
                 }
             }
         }

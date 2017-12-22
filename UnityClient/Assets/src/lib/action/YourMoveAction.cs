@@ -26,8 +26,12 @@ namespace Assets.src.lib.action
         public int ironAmount { get; set; }
         public int stoneAmount { get; set; }
 
+        public List<List<double>> field1;
+        public List<List<double>> field2;
+        public List<List<double>> field3;
+        public List<List<double>> field4;
+        public List<List<double>> field5;
+
         public List<Obstacle> obstacles { get; set; }
-        public int width;
-        public int height;
     }
 }

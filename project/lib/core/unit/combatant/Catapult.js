@@ -12,6 +12,7 @@ class Catapult extends Unit{
         super(position, color);
         this.type = "Catapult";
 
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {
@@ -21,9 +22,16 @@ class Catapult extends Unit{
     generateMoves(game){
         let res = this.generateRelocationMoves(game);
 
-        let shootingRangePoints = generators.generatePossibleRangedPointForCatapult(this, game);
+        let shootingRangePoints = generators.generatePossibleRangedPoints(this, game, true);
         for(let i = 0; i<shootingRangePoints.length; i++){
-            let mv = new ShootingMove(this.position, shootingRangePoints[i], "Stone");
+            var enemy = null;
+            if(game.matrix[shootingRangePoints[i].x][shootingRangePoints[i].y] !== null){
+                enemy = game.matrix[shootingRangePoints[i].x][shootingRangePoints[i].y];
+            }
+            else{
+                enemy = game.towers[shootingRangePoints[i].x][shootingRangePoints[i].y];
+            }
+            let mv = new ShootingMove(this.position, shootingRangePoints[i], enemy, "Stone");
             res.push(mv);
         }
 

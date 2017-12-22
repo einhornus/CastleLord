@@ -14,6 +14,8 @@ class Gate extends Unit{
         this.height = [
             [2.0],
         ]
+
+        this.mainHeight = 2.0;
     }
 
     isBuilding() {

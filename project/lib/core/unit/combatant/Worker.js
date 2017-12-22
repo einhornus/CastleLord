@@ -23,6 +23,8 @@ class Worker extends Unit{
     constructor(position, color){
         super(position, color);
         this.type = "Worker";
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {
@@ -187,7 +189,7 @@ class Worker extends Unit{
             function(end, game){
                 return true;
             },
-            utils.GAME_PARAMS.PRICE.TOWER.GOLD,
+            0,
             0,
             utils.GAME_PARAMS.PRICE.TOWER.STONE,
             0

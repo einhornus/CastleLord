@@ -19,7 +19,7 @@ namespace Assets.src.GameController
         public Terrain terrain;
         public Geometry.HeightData hd;
 
-        public double GAME_SPEED = 3.0;
+        public double GAME_SPEED = 1.0;
 
         /*
         public GameObject testPrefab;
@@ -115,9 +115,9 @@ namespace Assets.src.GameController
             hd = new Geometry.HeightData(terrain);
 
             Geometry.SetupMap(game.map.width, game.map.height);
+            //InitFieldManager(game.map.width, game.map.height);
 
             DrawLandscape(game.map);
-
 
             for (var i = 0; i < game.towers.Count; i++)
             {

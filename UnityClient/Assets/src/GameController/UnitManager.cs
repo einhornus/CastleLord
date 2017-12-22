@@ -70,7 +70,7 @@ namespace Assets.src.GameController
             unitMap.Add(unit.id, unit);
 
             Vector3 position = Geometry.GetGlobalPosition(unit.position, hd);
-            Debug.Log(unit.type +" " + position);
+            Debug.Log(unit.type + " " + position);
 
 
             GameObject prefab = GetPutUnitPrefab(unit);
@@ -113,42 +113,6 @@ namespace Assets.src.GameController
                 Vector3 newScale = oldScale * unit.size;
                 spawnedObject.transform.localScale = newScale;
             }
-        }
-
-        public void MoveUnit(MoveUnitAction action)
-        {
-            CameraPointToPoint(action.from);
-            CombinedAnimation comb = new CombinedAnimation();
-            double currentAngle = Geometry.GetRotationY(models[action.unit.id]);
-
-
-            List<PathFragment> newPath = SplitPath(action.path);
-            for (int i = 0; i < newPath.Count; i++)
-            {
-
-                Point from = newPath[i].from;
-                Point to = newPath[i].to;
-
-                MoveAnimation ma = new MoveAnimation(this, action.unit, delegate{ }, from, to);
-
-                double grad = Geometry.GetAngleGradusi(to.x - from.x, to.y - from.y);
-                if (grad != currentAngle)
-                {
-                    RotateAnimation ra = new RotateAnimation(this, action.unit, delegate { }, grad);
-                    comb.AddAnimation(ra);
-                }
-                currentAngle = grad;
-                comb.AddAnimation(ma);
-            }
-
-            comb.onDone = delegate
-            {
-                ResponseToServer response = new ISeeResponseToServer();
-                this.sendOptionsQueue.Enqueue(response);
-            };
-            //comb.speed = action.path.Count * Animation.DEFAULT_SPEED;
-
-            this.currentAnimations.Add(comb);
         }
 
         public GameObject GetPutUnitPrefab(Unit unit)
@@ -370,23 +334,6 @@ namespace Assets.src.GameController
             return prefab;
         }
 
-
-        public void CaptureBuilding(CaptureUnitAction action)
-        {
-            Debug.Log("Capture started");
-            ChangePrefab(GetPutUnitPrefab(action.enemy), action.enemy);
-            Debug.Log("Capture completed");
-            ResponseToServer response = new ISeeResponseToServer();
-            this.sendOptionsQueue.Enqueue(response);
-        }
-
-        public void ChangeUnitState(ChangeStateAction action)
-        {
-            ChangePrefab(GetPutUnitPrefab(action.unit), action.unit);
-            ResponseToServer response = new ISeeResponseToServer();
-            this.sendOptionsQueue.Enqueue(response);
-        }
-
         public void ChangePrefab(GameObject newPrefab, Unit unit)
         {
             string id = unit.id;
@@ -395,140 +342,6 @@ namespace Assets.src.GameController
             spawnedObject.transform.localScale = oldObject.transform.localScale;
             models[id] = spawnedObject;
             oldObject.SetActive(false);
-        }
-
-        public void HealUnit(HealUnitAction action)
-        {
-
-
-            Debug.Log("Healing started");
-            this.damageText.SetActive(true);
-            Vector3 enemyPosition = Geometry.GetGlobalPosition(action.enemy.position, hd);
-            enemyPosition.y += Geometry.CELL_SIZE * 1f;
-
-            this.damageText.transform.position = enemyPosition;
-            this.damageText.GetComponent<TextMesh>().text = "+" + action.surplus;
-            this.damageText.GetComponent<TextMesh>().color = Color.green;
-            CombinedAnimation comb = new CombinedAnimation();
-
-            Point from = action.from;
-            Point to = action.enemy.position;
-            double grad = Geometry.GetAngleGradusi(to.x - from.x, to.y - from.y);
-
-            RotateAnimation rotate = new RotateAnimation(this, action.unit, delegate { }, grad);
-
-            ParallelAnimation par = new ParallelAnimation();
-            HealAnimation attack = new HealAnimation(this, action.unit, delegate { });
-            TakeDamageAnimation damage = new TakeDamageAnimation(this, action.enemy, delegate { });
-            DeathAnimation death = new DeathAnimation(this, action.enemy, delegate { });
-            par.AddAnimation(attack);
-
-
-            comb.AddAnimation(rotate);
-            comb.AddAnimation(par);
-
-
-            comb.onDone = delegate
-            {
-                ResponseToServer response = new ISeeResponseToServer();
-                this.sendOptionsQueue.Enqueue(response);
-                this.damageText.SetActive(false);
-                Debug.Log("Healing completed");
-            };
-
-            this.currentAnimations.Add(comb);
-        }
-
-        public void AttackUnit(AttackUnitAction action)
-        {
-            Debug.Log("Attack started");
-            this.damageText.SetActive(true);
-            Vector3 enemyPosition = Geometry.GetGlobalPosition(action.enemy.position, hd);
-            enemyPosition.y += Geometry.CELL_SIZE * 1f;
-
-            this.damageText.transform.position = enemyPosition;
-            this.damageText.GetComponent<TextMesh>().text = "-"+action.damage;
-            this.damageText.GetComponent<TextMesh>().color = Color.red;
-
-
-            CombinedAnimation comb = new CombinedAnimation();
-
-            Point from = action.from;
-            Point to = action.enemy.position;
-            double grad = Geometry.GetAngleGradusi(to.x - from.x, to.y - from.y);
-
-            RotateAnimation rotate = new RotateAnimation(this, action.unit, delegate { }, grad);
-
-            ParallelAnimation par = new ParallelAnimation();
-            AttackAnimation attack = new AttackAnimation(this, action.unit, delegate { });
-            TakeDamageAnimation damage = new TakeDamageAnimation(this, action.enemy, delegate { });
-            DeathAnimation death = new DeathAnimation(this, action.enemy, delegate { });
-            par.AddAnimation(attack);
-
-            if (action.kills)
-            {
-                par.AddAnimation(death);
-            }
-            else
-            {
-                par.AddAnimation(damage);
-            }
-
-
-            comb.AddAnimation(rotate);
-            comb.AddAnimation(par);
-
-
-            comb.onDone = delegate
-            {
-                if (action.kills)
-                {
-                    GameObject model = models[action.enemy.id];
-
-
-                    if (action.enemy.type.Equals("Tower"))
-                    {
-                        Vector3 oldPos = Geometry.GetGlobalPosition(action.enemy.position, hd);
-                        GameObject go = null;
-                        foreach (var m in models)
-                        {
-                            GameObject mmm = m.Value;
-                            Vector3 loc = mmm.transform.position;
-                            float dist = Vector3.Distance(loc, oldPos);
-                            if (dist < 0.1)
-                            {
-                                go = mmm;
-                            }
-                        }
-
-                        hd.RemoveTower(action.enemy.position);
-
-                        if (go != null)
-                        {
-                            Vector3 newPos = Geometry.GetGlobalPosition(action.enemy.position, hd);
-                            go.transform.position = newPos;
-                            Debug.Log(oldPos);
-                            Debug.Log(newPos);
-                        }
-                    }
-
-                    model.SetActive(false);
-                }
-
-                ResponseToServer response = new ISeeResponseToServer();
-                this.sendOptionsQueue.Enqueue(response);
-                this.damageText.SetActive(false);
-                Debug.Log("Attack completed");
-            };
-
-            this.currentAnimations.Add(comb);
-        }
-
-        public void AppearUnit(Unit unit)
-        {
-            PutUnit(unit);
-            ResponseToServer response = new ISeeResponseToServer();
-            this.sendOptionsQueue.Enqueue(response);
         }
 
 

@@ -37,16 +37,19 @@ namespace Assets.src.GameController
 
         public virtual void Apply()
         {
-
         }
-
-
 
         public bool expired = false;
 
         public GameObject GetGameObject()
         {
-            return environment.models[unit.id];
+            if (unit != null) {
+                return environment.models[unit.id];
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public virtual void Go()
@@ -58,11 +61,14 @@ namespace Assets.src.GameController
             if (phase < 1.0)
             {
                 string clip = GetClip();
-                Animator animator = obj.GetComponent<Animator>();
-                if (animator != null)
-                {
-                    animator.speed = (float)environment.GAME_SPEED;
-                    animator.Play(GetClip());
+
+                if (obj != null) {
+                    Animator animator = obj.GetComponent<Animator>();
+                    if (animator != null)
+                    {
+                        animator.speed = (float)environment.GAME_SPEED;
+                        animator.Play(GetClip());
+                    }
                 }
                 Apply();
             }
@@ -70,13 +76,16 @@ namespace Assets.src.GameController
             {
                 Apply();
                 expired = true;
-                Animator animator = obj.GetComponent<Animator>();
-                if (animator != null)
+                if (obj != null)
                 {
-                    animator.Play("idle");
-                    animator.speed = (float)environment.GAME_SPEED;
+                    Animator animator = obj.GetComponent<Animator>();
+                    if (animator != null)
+                    {
+                        animator.Play("idle");
+                        animator.speed = (float)environment.GAME_SPEED;
+                    }
                 }
-                onDone("abc");
+                onDone("abc"); 
             }
         }
 
@@ -91,6 +100,90 @@ namespace Assets.src.GameController
         }
     }
 
+
+
+    public class FlyToPointAnimation : Animation
+    {
+        public Point point;
+        public Point start;
+
+        public FlyToPointAnimation(GameControllerBehavior environment, Point point, Action<string> onDone) : base(environment, null, onDone)
+        {
+            Debug.Log("FLY_CREATED");
+            this.start = new Point((float)environment.currentX, (float)environment.currentY);
+            this.point = point;
+            environment.CameraPointToPoint(point);
+        }
+
+        private double MOVE_SPEED = DEFAULT_SPEED * 0.5;
+
+        public override void Go()
+        {
+            if (environment.cameraFlowTo == null) {
+                this.expired = true;
+                onDone("abc");
+            }
+        }
+    }
+
+
+
+    public class TextAnimation : Animation
+    {
+        public double x;
+        public double z;
+        public double startH;
+        public double endH;
+        public string text;
+        public bool isRed;
+
+        public TextAnimation(GameControllerBehavior environment, Unit unit, Action<string> onDone, double x, double z, string text, bool isRed, double startH, double endH) : base(environment, unit, onDone)
+        {
+            this.x = x;
+            this.z = z;
+            this.text = text;
+            this.isRed = isRed;
+            this.startH = startH;
+            this.endH = endH;
+            environment.damageText.SetActive(true);
+        }
+
+        public override double GetAnimationSpeed()
+        {
+            return 0.01;
+        }
+
+        public override void Apply()
+        {
+            TextMesh tm = environment.damageText.GetComponent<TextMesh>();
+            tm.text = text;
+            tm.color = Color.green;
+            if (isRed)
+            {
+                tm.color = Color.red;
+            }
+
+            double h = startH * (1 - phase) + endH * phase;
+            Vector3 pos = new Vector3((float)x, (float)h, (float)z);
+            Geometry.SetRotationY(environment.damageText, Geometry.GetRotationY(environment.mainCamera));
+            environment.damageText.transform.position = pos;
+            tm.color = new Color(tm.color.r, tm.color.g, tm.color.b, (float)(1 - phase));
+            if (this.phase > 0.95)
+            {
+                environment.damageText.SetActive(false);
+            }
+        }
+
+        public override string GetClip()
+        {
+            return "run";
+        }
+    }
+
+
+
+
+
     public class MoveAnimation : Animation
     {
         public MoveAnimation(GameControllerBehavior environment, Unit unit, System.Action<string> onDone, Point start, Point end) : base(environment, unit, onDone)
@@ -98,8 +191,6 @@ namespace Assets.src.GameController
             this.start = start;
             this.end = end;
         }
-
-
 
         private Point start;
         private Point end;
@@ -132,6 +223,73 @@ namespace Assets.src.GameController
     }
 
 
+
+
+
+    public class ProjectileAnimation : Animation
+    {
+        public Vector3 from;
+        public Vector3 to;
+        public bool isStone;
+        public static double PROJECTILE_SPEED = 0.5;
+
+        public ProjectileAnimation(GameControllerBehavior environment, Vector3 from, Vector3 to, bool isStone, Action<string> onDone) : base(environment, null, onDone)
+        {
+            this.from = from;
+            this.to = to;
+            this.isStone = isStone;
+            GameObject projectile = GetProjective();
+
+            double angle = Math.Atan2(to.x - from.x, to.z - from.z) * 180 / Math.PI + 90;
+            Geometry.SetRotationY(projectile, angle);
+        }
+
+        public override double GetAnimationSpeed()
+        {
+            var d = Vector3.Distance(from, to);
+            return PROJECTILE_SPEED / d;
+        }
+
+        public GameObject GetProjective()
+        {
+            if (isStone)
+            {
+                return environment.stoneProjectile;
+            }
+            else
+            {
+                return environment.arrowProjectile;
+            }
+        }
+
+        public override void Apply()
+        {
+            GameObject projectile = GetProjective();
+
+            Vector3 pos = from * (float)(1-phase) + to*(float)phase;
+            projectile.transform.position = pos;
+
+            Debug.Log(this.phase);
+
+            if (phase > 0.00)
+            {
+                GetProjective().SetActive(true);
+            }
+
+            if (phase > 0.98)
+            {
+                GetProjective().SetActive(false);
+            }
+        }
+
+        public override string GetClip()
+        {
+            return "run";
+        }
+    }
+
+
+
     public class AttackAnimation : Animation
     {
         public AttackAnimation(GameControllerBehavior environment, Unit unit, System.Action<string> onDone) : base(environment, unit, onDone)
@@ -141,6 +299,39 @@ namespace Assets.src.GameController
         public override void Apply()
         {
             //environment.FocusOn(unit.position.x, unit.position.y);
+        }
+
+        public override string GetClip()
+        {
+            return "attack";
+        }
+
+        public override double GetAnimationSpeed()
+        {
+            return 0.008;
+        }
+    }
+
+
+    public class SoundAnimation : Animation
+    {
+        public string sound;
+        public bool played;
+
+        public SoundAnimation(GameControllerBehavior environment, string sound, System.Action<string> onDone) : base(environment, null, onDone)
+        {
+            this.sound = sound;
+            played = false;
+        }
+
+        public override void Apply()
+        {
+            if (phase > 0 && !played)
+            {
+                AudioSource source = environment.GetSound(sound);
+                source.Play();
+                played = true;
+            }
         }
 
         public override string GetClip()
@@ -380,20 +571,21 @@ namespace Assets.src.GameController
 
         public override void Go()
         {
+            bool notExpired = false;
             for (int i = 0; i < animations.Count; i++)
             {
-                bool notExpired = false;
                 if (!animations[i].expired)
                 {
                     animations[i].Go();
                     notExpired = true;
                 }
+            }
 
-                if (!notExpired && !this.expired)
-                {
-                    this.expired = true;
-                    onDone("abc");
-                }
+            if (!notExpired && !this.expired)
+            {
+                Debug.Log("Terminate");
+                this.expired = true;
+                onDone("abc");
             }
         }
     }

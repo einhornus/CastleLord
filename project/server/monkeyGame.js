@@ -17,6 +17,7 @@ ShootingMove = require("./../lib/core/move/ShootingMove");
 Game = require("./../lib/core/Game.js");
 IncomeMove = require("./../lib/core/move/IncomeMove");
 mapGenerator = require("./../lib/core/map/MapGenerator");
+MapSettings = require("./../lib/core/map/MapSettings");
 Map = require("./../lib/core/map/Map");
 AI = require("./../server/AI/AI");
 
@@ -28,7 +29,7 @@ var initialResources = mapGenerator.MAP_SETTINGS_VALUES.INITIAL_RESOURCES.NORMAL
 var castleSize = mapGenerator.MAP_SETTINGS_VALUES.CASTLE_SIZE.NORMAL;
 
 
-var mapSettings = new mapGenerator.MapSettings(size, initialTroops, initialTroops, castleSize);
+var mapSettings = new MapSettings(size, initialTroops, initialTroops, castleSize);
 var map = mapGenerator.generate(mapSettings);
 var game = new Game(map);
 
@@ -36,11 +37,19 @@ var game = new Game(map);
 
 
 while(true){
-    drawer.printGame(game);
-    var move = AI.move(game);
+    var move = null;
+
+    if(game.getCurrentUnit().color === utils.NEUTRAL){
+        var moves = game.genMovesForCurrentUnit();
+        var index = game.getCurrentUnit().getMove(moves, game);
+        move = moves[index];
+    }
+    else{
+        move = AI.move(game);
+    }
+
     console.log("Move assigning ", move);
     var actions = game.assignMove(move);
-
 
     for(var i = 0; i<game.units.length; i++){
         game.units[i].setSightPoints(game);

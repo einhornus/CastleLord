@@ -21,6 +21,8 @@ class Priest extends Unit{
     constructor(position, color){
         super(position, color);
         this.type = "Priest";
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {

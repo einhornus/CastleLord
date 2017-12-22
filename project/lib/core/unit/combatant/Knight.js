@@ -11,6 +11,8 @@ class Knight extends Unit{
         super(position, color);
         this.type = "Knight";
         this.isMounted = true;
+
+        this.mainHeight = 1.0;
     }
 
     isBuilding() {

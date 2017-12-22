@@ -10,7 +10,7 @@ var move = function(game){
     var otherMoves = [];
 
     for(var i = 0; i<allTheMoves.length; i++){
-        if(allTheMoves[i].type === "Relocation"){
+        if(allTheMoves[i].type === "Relocation" || allTheMoves[i].type === "Idle"){
             relocationMoves.push(allTheMoves[i]);
         }
         else{

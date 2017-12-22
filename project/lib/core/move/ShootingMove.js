@@ -5,11 +5,12 @@ AttackUnitAction = require("../action/AttackUnitAction");
 
 
 class ShootingMove extends Move{
-    constructor(start, target, type){
+    constructor(start, target, enemy, type){
         super();
         this.start = start;
         this.target = target;
         this.type = type;
+        this.enemy = enemy;
     }
 
     assign(unit, game) {
@@ -23,6 +24,7 @@ class ShootingMove extends Move{
             }
         }
 
+        var attacker = game.matrix[startX][startY];
 
         var targetX = this.target.x;
         var targetY = this.target.y;
@@ -51,7 +53,8 @@ class ShootingMove extends Move{
         }
 
         var res = [];
-        res.push(new AttackUnitAction(unit, this.start, this.target, enemySoldier, kills, damage));
+
+        res.push(new AttackUnitAction(unit, this.start, this.target, enemySoldier, kills, damage, attacker.getWeapon(), enemySoldier.getArmour()));
 
         return res;
     }

@@ -16,6 +16,13 @@ class Farm extends Unit{
             [4.0, 4.0, 4.0],
             [4.0, 4.0, 4.0],
         ]
+
+        this.mainHeight = 4;
+    }
+
+
+    updateIncome(game) {
+        this.income = this.getIncome(game);
     }
 
     isBuilding() {
@@ -26,74 +33,47 @@ class Farm extends Unit{
         return utils.GAME_PARAMS.ARMOUR.WOOD_BUILDING;
     }
 
-    getIncome(){
-        var farms = 0;
-        var adjZone = Unit.enumeratePointsInsideArea(this.position, 5, game);
-
-        var well = null;
-
-        for(var i = 0; i<adjZone.length; i++){
-            if(tileChecker.isTileOccupiedByWater(game, adjZone[i])){
-                well = adjZone[i]
+    getIncome(game){
+        var farmList = [];
+        for(var i = 0; i<game.units.length; i++){
+            if(game.units[i].type === "Farm"){
+                farmList.push(game.units[i]);
             }
         }
 
-        if(well === null){
-            throw utils.Exception("No well for a farm");
-        }
-        else {
-            var wellZone = Unit.enumeratePointsInsideArea(well, 5, game);
-            var farms = 0;
+        var totalIncome = 0;
 
-            for (var i = 0; i < wellZone.length; i++) {
-                if (game.matrix[wellZone[i].x][wellZone[i].y] !== null) {
-                    if (game.matrix[wellZone[i].x][wellZone[i].y].type === "Farm") {
-                        farms++;
-                    }
+        for(var i = 0; i<game.map.landscapeWater.length; i++){
+            var well = game.map.landscapeWater[i];
+            var totalE = 0;
+
+            var currentE = null;
+            var currentDist = 0;
+
+            for(var j = 0; j<farmList.length; j++){
+                var farm = farmList[j];
+                var dist = utils.dist(farm.position, well);
+                var e = Math.exp(-utils.GAME_PARAMS.FARM_DIST_K*(dist-2)*(dist-2));
+                totalE += e;
+
+                if(farm.position.hash() === this.position.hash()){
+                    currentE = e;
+                    currentDist = dist;
                 }
             }
 
-            var k = Math.pow(0.8, farms);
-            var income = Math.round(utils.GAME_PARAMS.INCOME.FARM * k);
-            return income;
+            var incomeK = utils.GAME_PARAMS.INCOME.FARM * Math.pow(utils.GAME_PARAMS.WELL_K, totalE);
+            var incomeFromWell = incomeK * currentE;
+            totalIncome += incomeFromWell;
         }
+
+        return Math.round(totalIncome);
     }
 
     generateMoves(game){
-        var farms = 0;
-        var adjZone = Unit.enumeratePointsInsideArea(this.position, 5, game);
-
-        var well = null;
-
-        for(var i = 0; i<adjZone.length; i++){
-            if(tileChecker.isTileOccupiedByWater(game, adjZone[i])){
-                well = adjZone[i]
-            }
-        }
-
-        if(well === null){
-            throw utils.Exception("No well for a farm");
-        }
-        else{
-            var wellZone = Unit.enumeratePointsInsideArea(well, 5, game);
-            var farms = 0;
-
-            for(var i = 0; i<wellZone.length; i++){
-                if(game.matrix[wellZone[i].x][wellZone[i].y] !== null){
-                    if(game.matrix[wellZone[i].x][wellZone[i].y].type === "Farm"){
-                        farms++;
-                    }
-                }
-            }
-
-            var k = Math.pow(0.8, farms);
-            var income = Math.round(utils.GAME_PARAMS.INCOME.FARM * k);
-
-            let res = new IncomeMove(0, 0, 0, income, this.color);
-            return [res];
-
-
-        }
+        var income = this.getIncome(game);
+        let res = new IncomeMove(0, 0, 0, income, this.color);
+        return [res];
     }
 }
 

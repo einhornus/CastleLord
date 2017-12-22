@@ -202,32 +202,58 @@ var generatePossibleMoves = function (unit, game) {
     return res;
 }
 
-var generatePossibleRangedPointForArcher = function (unit, game) {
+var generatePossibleRangedPoints = function (unit, game, buildings) {
     var res = [];
-    var obstacles = makeObstacles(game);
+    var sightPoints = generateSightPoints(unit, game);
+    for(var i = 0; i<sightPoints.length; i++){
+        if(sightPoints[i].hash() !== unit.position.hash()) {
+            var point = sightPoints[i];
+            var u = game.matrix[point.x][point.y];
+            if (game.matrix[point.x][point.y] !== null) {
+                if(u.size === undefined || u.size === 1) {
+                    var nunit = game.matrix[point.x][point.y];
+                    if (nunit.isBuilding() === buildings) {
+                        if (!buildings && unit.color !== nunit.color) {
 
-    for (var i = 0; i < game.map.width; i++) {
-        for (var j = 0; j < game.map.height; j++) {
-            var point = new utils.Point(i, j);
-            //if (game.matrix[point.x][point.y] !== null) {
-            //if (game.matrix[point.x][point.y].color !== unit.color) {
-            //if (!game.matrix[point.x][point.y].isBuilding()) {
-            if (canShoot(game, unit.position, point, true, false, obstacles)) {
-                res.push(point);
-                //var damage = game.calculateDamage(unit, game.matrix[point.x][point.y]);
-                //if (damage > 0) {
-                res.push(point);
-                //}
+                        }
+                        else {
+                            res.push(point);
+                        }
+                    }
+                }
             }
-            //}
-            //}
-            //}
+
+            if(buildings) {
+                if (game.towers[point.x][point.y] !== null) {
+                    res.push(point);
+                }
+            }
+        }
+    }
+
+    if(buildings){
+        for(var i = 0; i<game.units.length; i++){
+            if(game.units[i].isBuilding()){
+                if(game.units[i] !== undefined && game.units[i].size > 1){
+                    var accept = false;
+                    var buildingPoints = Unit.enumeratePointsInsideArea(game.units[i].position, game.units[i].size, game);
+                    for(var j = 0; j<sightPoints.length; j++){
+                        for(var k = 0; k<buildingPoints.length; k++){
+                            if(buildingPoints[k].hash() === sightPoints[j].hash()){
+                                accept = true;
+                            }
+                        }
+                    }
+                    if(accept){
+                        res.push(game.units[i].position);
+                    }
+                }
+            }
         }
     }
 
     return res;
 }
-
 
 var generateSightPoints = function(unit, game)
 {
@@ -236,10 +262,11 @@ var generateSightPoints = function(unit, game)
     for (var i = 0; i < game.map.width; i++) {
         for (var j = 0; j < game.map.height; j++) {
             var point = new utils.Point(i, j);
-            if(utils.dist(point, unit.position) <= utils.GAME_PARAMS.SIGHT_RADIUS){
+            var d = utils.dist(point, unit.position);
+            if(d > utils.GAME_PARAMS.SIGHT_RADIUS || d === 0){
                 continue;
             }
-            if (canShoot(game, unit.position, point, true, false, obstacles)) {
+            if (canShoot(game, unit.position, point, game.hasTower(unit.position), game.hasTower(point), obstacles)) {
                 res.push(point);
             }
         }
@@ -247,37 +274,6 @@ var generateSightPoints = function(unit, game)
     return res;
 }
 
-var generatePossibleRangedPointForCatapult = function (unit, game) {
-    var res = [];
-
-    for (var i = 0; i < game.map.width; i++) {
-        for (var j = 0; j < game.map.height; j++) {
-            var point = new utils.Point(i, j);
-
-            if (game.towers[point.x][point.y] !== null) {
-                if (game.towers[point.x][point.y].isBuilding()) {
-                    var dist = utils.dist(unit.position, point);
-                    var damage = game.calculateDamage(unit, game.towers[point.x][point.y]);
-                    if (damage > 0) {
-                        res.push(point);
-                    }
-                }
-            }
-            else {
-                if (game.matrix[point.x][point.y] !== null) {
-                    if (game.matrix[point.x][point.y].isBuilding()) {
-                        var damage = game.calculateDamage(unit, game.matrix[point.x][point.y]);
-                        if (damage > 0) {
-                            res.push(point);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return res;
-}
 
 var makeObstacles = function (game) {
     var res = [];
@@ -297,7 +293,7 @@ var makeObstacles = function (game) {
                         if(unit.color === utils.WHITE){
                             obstacle.whiteGate = true;
                         }
-                        if(unit.color === utils.WHITE){
+                        if(unit.color === utils.BLACK){
                             obstacle.blackGate = true;
                         }
                     }
@@ -318,6 +314,26 @@ var makeObstacles = function (game) {
         var obstacle = {x: tree.x, y: tree.y, height: utils.GAME_PARAMS.TREE_HEIGHT};
         obstacle.whiteGate = false;
         obstacle.blackGate = false;
+        res.push(obstacle);
+    }
+
+    var depositPoints = [];
+    for(var i = 0; i<game.map.landscapeWater.length; i++){
+        depositPoints.push(game.map.landscapeWater[i]);
+    }
+
+    for(var i = 0; i<game.map.landscapeIronDeposits.length; i++){
+        depositPoints.push(game.map.landscapeIronDeposits[i]);
+    }
+
+    for(var i = 0; i<game.map.landscapeStoneDeposits.length; i++){
+        depositPoints.push(game.map.landscapeStoneDeposits[i]);
+    }
+
+
+    for(var i = 0; i<depositPoints.length; i++){
+        var point = depositPoints[i];
+        var obstacle = {x: point.x, y: point.y, height: 0, whiteGate:false, blackGate:false};
         res.push(obstacle);
     }
 
@@ -394,7 +410,6 @@ module.exports.generatePointsInDirections = generatePointsInDirections;
 module.exports.generatePossibleMoves = generatePossibleMoves;
 module.exports.getEmptyAdjacentCells = getEmptyAdjacentCells;
 module.exports.getPassableAdjacentCells = getPassableAdjacentCells;
-module.exports.generatePossibleRangedPointForArcher = generatePossibleRangedPointForArcher;
-module.exports.generatePossibleRangedPointForCatapult = generatePossibleRangedPointForCatapult;
+module.exports.generatePossibleRangedPoints = generatePossibleRangedPoints;
 module.exports.generateSightPoints = generateSightPoints;
 module.exports.makeObstacles = makeObstacles;
